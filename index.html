@@ -16,7 +16,6 @@
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg-color); text-align: center; padding: 20px; color: var(--text-color); transition: 0.3s; }
         .container { max-width: 600px; margin: auto; background: var(--card-bg); padding: 30px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); position: relative; }
         
-        /* עיצוב תמונת פרופיל */
         .profile-pic-container { position: relative; width: 150px; height: 150px; margin: 0 auto 20px; }
         .car-pic { width: 150px; height: 150px; border-radius: 50%; object-fit: cover; border: 4px solid #1877f2; background: #eee; }
         
@@ -35,7 +34,13 @@
         #reviews { margin-top: 30px; text-align: right; }
         .review-card { border-bottom: 1px solid var(--border-color); padding: 15px 0; position: relative; }
         .stars { color: #f39c12; }
-        .del-btn { background: #ff4d4d; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; float: left; display: none; }
+        
+        /* עיצוב כפתור מחיקה למנהל */
+        .del-btn { 
+            background: #ff4d4d; color: white; border: none; 
+            padding: 5px 10px; border-radius: 6px; cursor: pointer; 
+            float: left; font-size: 12px; font-weight: bold;
+        }
     </style>
 </head>
 <body>
@@ -93,43 +98,39 @@
   const reviewsRef = ref(db, 'reviews');
 
   let isAdmin = false;
+  let currentReviewsData = null; // שמירת הנתונים גלובלית כדי לרענן תצוגה בקלות
 
-  // טעינת התמונה מה-Database
+  // טעינת התמונה
   onValue(ref(db, 'config/carImageUrl'), (snapshot) => {
       const url = snapshot.val();
       if (url) document.getElementById('carImage').src = url;
   });
 
+  // כניסת מנהל
   window.adminLogin = () => {
       const user = prompt("שם משתמש:");
       const pass = prompt("סיסמה:");
-      if (user === "admin" && pass === "1234") {
+      if (user === "admin" && pass === "Qtoha1394") {
           isAdmin = true;
           document.getElementById('changePicBtn').style.display = 'flex';
-          alert("מחובר כמנהל!");
-          renderReviews();
+          alert("מחובר כמנהל! כפתורי מחיקה מופעלים.");
+          renderReviews(currentReviewsData); // רענון מיידי של התגובות להצגת כפתורי מחיקה
+      } else {
+          alert("פרטים שגויים");
       }
   };
 
-  // פונקציית שינוי תמונה באמצעות קישור Google Drive
   window.changeCarImage = () => {
       let url = prompt("הדבק כאן את קישור השיתוף של התמונה מ-Google Drive:");
       if (url) {
-          // המרה אוטומטית של לינק שיתוף של גוגל ללינק תמונה ישיר
           if (url.includes("drive.google.com")) {
               try {
                   const parts = url.split('/');
                   const fileId = parts[parts.indexOf('d') + 1];
                   url = `https://lh3.googleusercontent.com/u/0/d/${fileId}`;
-              } catch (e) {
-                  alert("פורמט הלינק לא תקין, וודא שהעתקת לינק שיתוף מלא.");
-                  return;
-              }
+              } catch (e) { alert("לינק לא תקין"); return; }
           }
-          
-          set(ref(db, 'config/carImageUrl'), url)
-          .then(() => alert("התמונה עודכנה! וודא שהגדרת 'כל מי שקיבל את הקישור' בדרייב."))
-          .catch(() => alert("שגיאה בעדכון"));
+          set(ref(db, 'config/carImageUrl'), url).then(() => alert("עודכן!"));
       }
   };
 
@@ -140,43 +141,70 @@
     if (!comment.trim()) return alert("כתבו חוות דעת");
     push(reviewsRef, { name, rating: parseInt(rating), comment, timestamp: Date.now() });
     document.getElementById('carComment').value = "";
+    document.getElementById('reviewerName').value = "";
   };
 
+  // פונקציית המחיקה
   window.deleteReview = (id) => {
-      if (confirm("למחוק?")) remove(ref(db, 'reviews/' + id));
+      if (confirm("האם אתה בטוח שברצונך למחוק תגובה זו?")) {
+          remove(ref(db, 'reviews/' + id))
+            .then(() => alert("התגובה נמחקה"))
+            .catch((err) => alert("שגיאה במחיקה: " + err));
+      }
   };
 
+  // האזנה לשינויים ב-Database
   onValue(reviewsRef, (snapshot) => {
-    const data = snapshot.val();
+    currentReviewsData = snapshot.val();
+    renderReviews(currentReviewsData);
+  });
+
+  function renderReviews(data) {
     const reviewsDiv = document.getElementById('reviews');
-    reviewsDiv.innerHTML = "<h3>חוות דעת:</h3>";
-    if (!data) return;
+    reviewsDiv.innerHTML = "<h3>חוות דעת מהגולשים:</h3>";
+    
+    if (!data) {
+        document.getElementById('totalReviews').innerText = "אין דירוגים עדיין";
+        document.getElementById('avgScore').innerText = "0.0";
+        document.getElementById('avgStars').innerHTML = "";
+        return;
+    }
 
     let totalScore = 0, count = 0;
-    Object.keys(data).reverse().forEach(id => {
+    const sortedKeys = Object.keys(data).reverse();
+
+    sortedKeys.forEach(id => {
       const r = data[id];
       totalScore += r.rating;
       count++;
+      const date = new Date(r.timestamp).toLocaleDateString('he-IL');
+      
       reviewsDiv.innerHTML += `
         <div class="review-card">
-            ${isAdmin ? `<button class="del-btn" style="display:block" onclick="deleteReview('${id}')">מחק</button>` : ''}
+            ${isAdmin ? `<button class="del-btn" onclick="deleteReview('${id}')">מחק 🗑️</button>` : ''}
             <strong>${r.name}</strong>
             <div class="stars">${"⭐".repeat(r.rating)}</div>
             <p>${r.comment}</p>
+            <small style="color:var(--sub-text)">${date}</small>
         </div>`;
     });
+
     const avg = (totalScore / count).toFixed(1);
     document.getElementById('avgScore').innerText = avg;
     document.getElementById('avgStars').innerHTML = "⭐".repeat(Math.round(avg));
     document.getElementById('totalReviews').innerText = `מבוסס על ${count} דירוגים`;
-  });
+  }
 
   window.toggleTheme = () => {
       const target = document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark";
       document.documentElement.setAttribute("data-theme", target);
       localStorage.setItem("theme", target);
+      document.getElementById("themeBtn").innerText = target === "dark" ? "☀️" : "🌙";
   };
-  if (localStorage.getItem("theme") === "dark") document.documentElement.setAttribute("data-theme", "dark");
+  if (localStorage.getItem("theme") === "dark") {
+      document.documentElement.setAttribute("data-theme", "dark");
+      document.getElementById("themeBtn").innerText = "☀️";
+  }
 </script>
 
 </body>
