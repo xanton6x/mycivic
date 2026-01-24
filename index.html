@@ -34,13 +34,9 @@
         #reviews { margin-top: 30px; text-align: right; }
         .review-card { border-bottom: 1px solid var(--border-color); padding: 15px 0; position: relative; }
         .stars { color: #f39c12; }
+        .del-btn { background: #ff4d4d; color: white; border: none; padding: 5px 10px; border-radius: 6px; cursor: pointer; float: left; font-size: 12px; font-weight: bold; }
         
-        /* עיצוב כפתור מחיקה למנהל */
-        .del-btn { 
-            background: #ff4d4d; color: white; border: none; 
-            padding: 5px 10px; border-radius: 6px; cursor: pointer; 
-            float: left; font-size: 12px; font-weight: bold;
-        }
+        .time-ago { font-size: 0.75rem; color: var(--sub-text); margin-right: 10px; }
     </style>
 </head>
 <body>
@@ -98,35 +94,49 @@
   const reviewsRef = ref(db, 'reviews');
 
   let isAdmin = false;
-  let currentReviewsData = null; // שמירת הנתונים גלובלית כדי לרענן תצוגה בקלות
+  let currentReviewsData = null;
 
-  // טעינת התמונה
+  // פונקציה לחישוב זמן יחסי בעברית
+  function timeAgo(timestamp) {
+    const now = Date.now();
+    const diff = now - timestamp;
+    const seconds = Math.floor(diff / 1000);
+    const minutes = Math.floor(seconds / 60);
+    const hours = Math.floor(minutes / 60);
+    const days = Math.floor(hours / 24);
+
+    if (seconds < 60) return "ממש עכשיו";
+    if (minutes < 60) return `לפני ${minutes} דקות`;
+    if (hours < 24) return `לפני ${hours} שעות`;
+    if (days === 1) return "אתמול";
+    if (days < 7) return `לפני ${days} ימים`;
+    return new Date(timestamp).toLocaleDateString('he-IL');
+  }
+
   onValue(ref(db, 'config/carImageUrl'), (snapshot) => {
       const url = snapshot.val();
       if (url) document.getElementById('carImage').src = url;
   });
 
-  // כניסת מנהל
   window.adminLogin = () => {
       const user = prompt("שם משתמש:");
       const pass = prompt("סיסמה:");
-      if (user === "admin" && pass === "Qtoha1394") {
+      if (user === "admin" && pass === "1234") {
           isAdmin = true;
           document.getElementById('changePicBtn').style.display = 'flex';
-          alert("מחובר כמנהל! כפתורי מחיקה מופעלים.");
-          renderReviews(currentReviewsData); // רענון מיידי של התגובות להצגת כפתורי מחיקה
+          alert("מחובר כמנהל!");
+          renderReviews(currentReviewsData);
       } else {
           alert("פרטים שגויים");
       }
   };
 
   window.changeCarImage = () => {
-      let url = prompt("הדבק כאן את קישור השיתוף של התמונה מ-Google Drive:");
+      let url = prompt("הדבק כאן את קישור השיתוף מ-Google Drive:");
       if (url) {
           if (url.includes("drive.google.com")) {
               try {
-                  const parts = url.split('/');
-                  const fileId = parts[parts.indexOf('d') + 1];
+                  const fileId = url.split('/d/')[1].split('/')[0];
                   url = `https://lh3.googleusercontent.com/u/0/d/${fileId}`;
               } catch (e) { alert("לינק לא תקין"); return; }
           }
@@ -144,16 +154,10 @@
     document.getElementById('reviewerName').value = "";
   };
 
-  // פונקציית המחיקה
   window.deleteReview = (id) => {
-      if (confirm("האם אתה בטוח שברצונך למחוק תגובה זו?")) {
-          remove(ref(db, 'reviews/' + id))
-            .then(() => alert("התגובה נמחקה"))
-            .catch((err) => alert("שגיאה במחיקה: " + err));
-      }
+      if (confirm("למחוק את התגובה?")) remove(ref(db, 'reviews/' + id));
   };
 
-  // האזנה לשינויים ב-Database
   onValue(reviewsRef, (snapshot) => {
     currentReviewsData = snapshot.val();
     renderReviews(currentReviewsData);
@@ -177,15 +181,14 @@
       const r = data[id];
       totalScore += r.rating;
       count++;
-      const date = new Date(r.timestamp).toLocaleDateString('he-IL');
       
       reviewsDiv.innerHTML += `
         <div class="review-card">
             ${isAdmin ? `<button class="del-btn" onclick="deleteReview('${id}')">מחק 🗑️</button>` : ''}
             <strong>${r.name}</strong>
+            <span class="time-ago">${timeAgo(r.timestamp)}</span>
             <div class="stars">${"⭐".repeat(r.rating)}</div>
             <p>${r.comment}</p>
-            <small style="color:var(--sub-text)">${date}</small>
         </div>`;
     });
 
