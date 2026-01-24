@@ -3,30 +3,136 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>דרגו את הרכב שלי</title>
+    <title>דרגו את ה-Civic שלי</title>
     <style>
-        body { font-family: sans-serif; text-align: center; background: #f4f4f4; padding: 20px; }
-        .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); max-width: 500px; margin: auto; }
-        img { width: 100%; border-radius: 10px; }
-        h1 { color: #333; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f2f5; text-align: center; padding: 20px; color: #1c1e21; }
+        .container { max-width: 600px; margin: auto; background: white; padding: 30px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+        img { width: 100%; border-radius: 15px; margin-bottom: 20px; object-fit: cover; max-height: 400px; }
+        
+        .stats-box { background: #f8f9fa; padding: 15px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #e1e4e8; }
+        .average-score { font-size: 2.5rem; font-weight: bold; color: #f39c12; margin: 0; }
+        .total-reviews { font-size: 0.9rem; color: #65676b; }
+
+        .rating-input { margin: 20px 0; background: #fff; padding: 15px; border-radius: 12px; border: 1px solid #ddd; }
+        select, textarea { width: 100%; padding: 12px; margin-top: 10px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
+        textarea { height: 80px; resize: none; }
+        
+        button { background: #1877f2; color: white; border: none; padding: 12px 30px; border-radius: 8px; cursor: pointer; margin-top: 15px; font-weight: bold; width: 100%; transition: background 0.3s; }
+        button:hover { background: #166fe5; }
+
+        #reviews { margin-top: 30px; text-align: right; }
+        .review-card { background: #fff; border-bottom: 1px solid #eee; padding: 15px 0; }
+        .review-card:last-child { border: none; }
+        .stars { color: #f39c12; font-size: 1.2rem; }
+        .review-text { margin: 5px 0 0; color: #1c1e21; }
+        .review-date { font-size: 0.8rem; color: #90949c; }
     </style>
 </head>
 <body>
 
-    <div class="card">
-        <h1>מה דעתכם על הרכב שלי?</h1>
-        <img src="car.jpg" alt="הרכב שלי">
-        
-        <p>דירוג ממוצע: ⭐⭐⭐⭐⭐</p>
-        
-        <hr>
-        
-        <h3>כתבו חוות דעת:</h3>
-        <div id="disqus_thread"></div>
+<div class="container">
+    <h1>מה דעתכם על ה-Civic שלי?</h1>
+    
+    <img src="car.jpg" alt="Honda Civic">
+
+    <div class="stats-box">
+        <p class="average-score" id="avgScore">0.0</p>
+        <div class="stars" id="avgStars"></div>
+        <p class="total-reviews" id="totalReviews">טוען נתונים...</p>
     </div>
 
-    <script>
-        // כאן מדביקים את קוד ההטמעה של Disqus או שירות תגובות אחר
-    </script>
+    <div class="rating-input">
+        <label>בחר דירוג:</label>
+        <select id="carRating">
+            <option value="5">⭐⭐⭐⭐⭐ (מעולה)</option>
+            <option value="4">⭐⭐⭐⭐ (טוב מאד)</option>
+            <option value="3">⭐⭐⭐ (נחמד)</option>
+            <option value="2">⭐⭐ (טעון שיפור)</option>
+            <option value="1">⭐ (לא אהבתי)</option>
+        </select>
+        <textarea id="carComment" placeholder="כתבו חוות דעת קצרה..."></textarea>
+        <button onclick="submitReview()">שלח דירוג</button>
+    </div>
+
+    <hr>
+    <h3>חוות דעת מהגולשים:</h3>
+    <div id="reviews">טוען חוות דעת...</div>
+</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+  import { getFirestore, collection, addDoc, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+  // הגדרות ה-Firebase שלך
+  const firebaseConfig = {
+    apiKey: "AIzaSyCiBOPWWSgKlz0IHVvTt4jktfHLI1hsYQc",
+    authDomain: "mycivic-11af8.firebaseapp.com",
+    databaseURL: "https://mycivic-11af8-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "mycivic-11af8",
+    storageBucket: "mycivic-11af8.firebasestorage.app",
+    messagingSenderId: "428340353040",
+    appId: "1:428340353040:web:f6f9f9ce2c83c8ed195295"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+  const reviewsCol = collection(db, "reviews");
+
+  // שליחת חוות דעת
+  window.submitReview = async () => {
+    const rating = document.getElementById('carRating').value;
+    const comment = document.getElementById('carComment').value;
+
+    if (comment.trim() === "") return alert("בבקשה כתבו חוות דעת לפני השליחה");
+
+    try {
+        await addDoc(reviewsCol, {
+          rating: parseInt(rating),
+          comment: comment,
+          timestamp: new Date()
+        });
+        document.getElementById('carComment').value = "";
+        alert("תודה! הדירוג שלך התקבל.");
+    } catch (e) {
+        console.error("Error adding document: ", e);
+    }
+  };
+
+  // משיכת נתונים וחישוב ממוצע בזמן אמת
+  const q = query(reviewsCol, orderBy("timestamp", "desc"));
+  onSnapshot(q, (snapshot) => {
+    const reviewsDiv = document.getElementById('reviews');
+    let totalScore = 0;
+    let count = 0;
+    reviewsDiv.innerHTML = "";
+
+    snapshot.forEach(doc => {
+      const data = doc.data();
+      totalScore += data.rating;
+      count++;
+
+      // יצירת כרטיס תגובה
+      const date = data.timestamp ? new Date(data.timestamp.seconds * 1000).toLocaleDateString('he-IL') : '';
+      reviewsDiv.innerHTML += `
+        <div class="review-card">
+            <div class="stars">${"⭐".repeat(data.rating)}</div>
+            <p class="review-text">${data.comment}</p>
+            <span class="review-date">${date}</span>
+        </div>
+      `;
+    });
+
+    // עדכון סטטיסטיקה בראש העמוד
+    if (count > 0) {
+        const avg = (totalScore / count).toFixed(1);
+        document.getElementById('avgScore').innerText = avg;
+        document.getElementById('avgStars').innerText = "⭐".repeat(Math.round(avg));
+        document.getElementById('totalReviews').innerText = `מבוסס על ${count} דירוגים`;
+    } else {
+        document.getElementById('totalReviews').innerText = "עדיין אין דירוגים. תהיו הראשונים!";
+    }
+  });
+</script>
+
 </body>
 </html>
