@@ -2,7 +2,7 @@
 <html lang="he" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, interactive-widget=resizes-content">
     <title>דרגו את ה-Civic שלי</title>
     <style>
         :root {
@@ -20,6 +20,7 @@
             background: var(--bg-color); color: var(--text-color);
             margin: 0; padding: 10px; transition: 0.3s;
             display: flex; justify-content: center;
+            min-height: 100vh;
         }
 
         .container { 
@@ -27,9 +28,9 @@
             background: var(--card-bg); padding: 20px; 
             border-radius: 25px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); 
             margin-top: 50px; position: relative;
+            align-self: flex-start; /* עוזר במניעת קפיצות כשהמקלדת עולה */
         }
 
-        /* תמונת פרופיל אדפטיבית */
         .profile-container { position: relative; width: 120px; height: 120px; margin: -60px auto 15px; }
         .car-pic { 
             width: 100%; height: 100%; border-radius: 50%; 
@@ -48,7 +49,6 @@
         .average-score { font-size: 3rem; font-weight: 800; color: var(--star-active); margin: 0; }
         .total-count { font-size: 0.9rem; color: var(--sub-text); }
 
-        /* אנימציית כוכבים */
         .star-rating { 
             display: flex; justify-content: center; gap: 8px; 
             margin: 15px 0; font-size: 35px; direction: ltr; 
@@ -71,10 +71,15 @@
             border: 1px solid var(--border-color); background: var(--input-bg);
             color: var(--text-color); box-sizing: border-box; font-size: 16px; outline: none;
         }
+        
+        /* אזור הזנת הדירוג - עם מעבר חלק */
+        .rating-input { transition: transform 0.3s ease; }
+
         button.submit-btn { 
             background: var(--primary); color: white; border: none; 
             padding: 15px; border-radius: 12px; width: 100%; 
             font-weight: bold; font-size: 16px; cursor: pointer; transition: 0.2s;
+            margin-top: 10px;
         }
         button.submit-btn:active { transform: scale(0.95); }
 
@@ -120,7 +125,7 @@
         <p class="total-count" id="totalReviews">טוען...</p>
     </div>
 
-    <div class="rating-input">
+    <div class="rating-input" id="ratingArea">
         <input type="text" id="reviewerName" placeholder="איך קוראים לך?">
         
         <div class="star-rating" id="starInput">
@@ -155,6 +160,19 @@
   let isAdmin = false;
   let selectedRating = 0;
   let currentData = null;
+
+  // פונקציה למניעת הסתרה על ידי המקלדת
+  const commentBox = document.getElementById('carComment');
+  const ratingArea = document.getElementById('ratingArea');
+
+  const scrollToInput = () => {
+      setTimeout(() => {
+          ratingArea.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 300);
+  };
+
+  commentBox.addEventListener('focus', scrollToInput);
+  document.getElementById('reviewerName').addEventListener('focus', scrollToInput);
 
   // כוכבים אינטראקטיביים
   const stars = document.querySelectorAll('#starInput span');
@@ -210,6 +228,8 @@
     document.getElementById('reviewerName').value = "";
     selectedRating = 0;
     stars.forEach(s => s.classList.remove('active'));
+    // סגירת מקלדת בנייד
+    document.activeElement.blur();
   };
 
   window.deleteReview = (id) => { if (confirm("למחוק?")) remove(ref(db, 'reviews/' + id)); };
