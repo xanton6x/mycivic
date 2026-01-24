@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>דרגו את ה-Civic שלי</title>
     <style>
-        /* משתני צבעים למעבר קל בין מצבים */
         :root {
             --bg-color: #f0f2f5;
             --card-bg: #ffffff;
@@ -60,24 +59,11 @@
         button { background: #1877f2; color: white; border: none; padding: 12px 30px; border-radius: 8px; cursor: pointer; margin-top: 15px; font-weight: bold; width: 100%; transition: background 0.3s; }
         button:hover { background: #166fe5; }
 
-        /* כפתור החלפת מצב צף */
         .theme-toggle {
-            position: fixed;
-            top: 20px;
-            left: 20px;
-            background: #1877f2;
-            color: white;
-            border: none;
-            padding: 10px;
-            border-radius: 50%;
-            cursor: pointer;
-            width: 45px;
-            height: 45px;
-            font-size: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            position: fixed; top: 20px; left: 20px; background: #1877f2; color: white; border: none;
+            padding: 10px; border-radius: 50%; cursor: pointer; width: 45px; height: 45px;
+            font-size: 20px; display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2); z-index: 1000;
         }
 
         #reviews { margin-top: 30px; text-align: right; }
@@ -120,8 +106,9 @@
 </div>
 
 <script type="module">
+  // שימוש ב-SDK של Realtime Database
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-  import { getFirestore, collection, addDoc, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+  import { getDatabase, ref, push, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyCiBOPWWSgKlz0IHVvTt4jktfHLI1hsYQc",
@@ -134,8 +121,8 @@
   };
 
   const app = initializeApp(firebaseConfig);
-  const db = getFirestore(app);
-  const reviewsCol = collection(db, "reviews");
+  const db = getDatabase(app);
+  const reviewsRef = ref(db, 'reviews');
 
   // לוגיקת Dark Mode
   window.toggleTheme = () => {
@@ -146,55 +133,61 @@
       document.getElementById("themeBtn").innerText = targetTheme === "dark" ? "☀️" : "🌙";
   };
 
-  // טעינת העדפת ערכת נושא
   const savedTheme = localStorage.getItem("theme") || "light";
   document.documentElement.setAttribute("data-theme", savedTheme);
   document.getElementById("themeBtn").innerText = savedTheme === "dark" ? "☀️" : "🌙";
 
-  window.submitReview = async () => {
+  // שליחת נתונים ל-Realtime Database
+  window.submitReview = () => {
     const rating = document.getElementById('carRating').value;
     const comment = document.getElementById('carComment').value;
     if (comment.trim() === "") return alert("בבקשה כתבו חוות דעת");
 
-    try {
-        await addDoc(reviewsCol, {
-          rating: parseInt(rating),
-          comment: comment,
-          timestamp: new Date()
-        });
+    push(reviewsRef, {
+      rating: parseInt(rating),
+      comment: comment,
+      timestamp: Date.now()
+    }).then(() => {
         document.getElementById('carComment').value = "";
         alert("תודה! הדירוג התקבל.");
-    } catch (e) { console.error(e); }
+    }).catch((error) => {
+        console.error("Error:", error);
+        alert("שגיאה בשליחה. וודא שפתחת את ה-Rules ב-Firebase.");
+    });
   };
 
-  const q = query(reviewsCol, orderBy("timestamp", "desc"));
-  onSnapshot(q, (snapshot) => {
+  // האזנה לשינויים בזמן אמת
+  onValue(reviewsRef, (snapshot) => {
+    const data = snapshot.val();
     const reviewsDiv = document.getElementById('reviews');
-    let totalScore = 0, count = 0;
     reviewsDiv.innerHTML = "";
+    
+    if (!data) {
+        document.getElementById('totalReviews').innerText = "תהיו הראשונים לדרג!";
+        return;
+    }
 
-    snapshot.forEach(doc => {
-      const data = doc.data();
-      totalScore += data.rating;
+    let totalScore = 0, count = 0;
+    // הפיכת האובייקט למערך וסידור לפי זמן (חדש למעלה)
+    const reviewsArray = Object.values(data).reverse();
+
+    reviewsArray.forEach(review => {
+      totalScore += review.rating;
       count++;
-      const date = data.timestamp ? new Date(data.timestamp.seconds * 1000).toLocaleDateString('he-IL') : '';
+      const date = new Date(review.timestamp).toLocaleDateString('he-IL');
       reviewsDiv.innerHTML += `
         <div class="review-card">
-            <div class="stars">${"⭐".repeat(data.rating)}</div>
-            <p class="review-text">${data.comment}</p>
+            <div class="stars">${"⭐".repeat(review.rating)}</div>
+            <p class="review-text">${review.comment}</p>
             <span class="review-date">${date}</span>
         </div>
       `;
     });
 
-    if (count > 0) {
-        const avg = (totalScore / count).toFixed(1);
-        document.getElementById('avgScore').innerText = avg;
-        document.getElementById('avgStars').innerText = "⭐".repeat(Math.round(avg));
-        document.getElementById('totalReviews').innerText = `מבוסס על ${count} דירוגים`;
-    } else {
-        document.getElementById('totalReviews').innerText = "תהיו הראשונים לדרג!";
-    }
+    const avg = (totalScore / count).toFixed(1);
+    document.getElementById('avgScore').innerText = avg;
+    document.getElementById('avgStars').innerText = "⭐".repeat(Math.round(avg));
+    document.getElementById('totalReviews').innerText = `מבוסס על ${count} דירוגים`;
   });
 </script>
 
