@@ -2,7 +2,7 @@
 <html lang="he" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, interactive-widget=resizes-content">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>דרגו את ה-Civic שלי</title>
     <style>
         :root {
@@ -19,93 +19,72 @@
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
             background: var(--bg-color); color: var(--text-color);
             margin: 0; padding: 10px; transition: 0.3s;
-            display: flex; justify-content: center;
-            min-height: 100vh;
+            display: flex; flex-direction: column; align-items: center;
         }
 
         .container { 
             width: 100%; max-width: 500px; 
             background: var(--card-bg); padding: 20px; 
             border-radius: 25px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); 
-            margin-top: 50px; position: relative;
-            align-self: flex-start; /* עוזר במניעת קפיצות כשהמקלדת עולה */
+            margin-top: 50px; position: relative; box-sizing: border-box;
         }
 
         .profile-container { position: relative; width: 120px; height: 120px; margin: -60px auto 15px; }
-        .car-pic { 
-            width: 100%; height: 100%; border-radius: 50%; 
-            object-fit: cover; border: 5px solid var(--card-bg);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2); background: #eee;
-        }
-        .change-pic-btn { 
-            position: absolute; bottom: 5px; right: 5px; 
-            background: #42b72a; color: white; border: none; 
-            border-radius: 50%; width: 35px; height: 35px; 
-            cursor: pointer; display: none; align-items: center; justify-content: center;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.2); font-size: 18px;
-        }
+        .car-pic { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; border: 5px solid var(--card-bg); box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
+        
+        .change-pic-btn { position: absolute; bottom: 5px; right: 5px; background: #42b72a; color: white; border: none; border-radius: 50%; width: 35px; height: 35px; cursor: pointer; display: none; align-items: center; justify-content: center; font-size: 18px; }
 
-        .stats-box { margin-bottom: 20px; }
+        .stats-box { margin-bottom: 20px; text-align: center; }
         .average-score { font-size: 3rem; font-weight: 800; color: var(--star-active); margin: 0; }
-        .total-count { font-size: 0.9rem; color: var(--sub-text); }
 
-        .star-rating { 
-            display: flex; justify-content: center; gap: 8px; 
-            margin: 15px 0; font-size: 35px; direction: ltr; 
-        }
-        .star-rating span { 
-            color: var(--star-color); cursor: pointer; transition: transform 0.2s, color 0.2s; 
-        }
-        .star-rating span:hover { transform: scale(1.2); }
+        .star-rating { display: flex; justify-content: center; gap: 8px; margin: 15px 0; font-size: 35px; direction: ltr; }
+        .star-rating span { color: var(--star-color); cursor: pointer; transition: 0.2s; }
         .star-rating span.active { color: var(--star-active); animation: pop 0.3s ease-out; }
 
-        @keyframes pop {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.4); }
-            100% { transform: scale(1); }
+        @keyframes pop { 0% { transform: scale(1); } 50% { transform: scale(1.4); } 100% { transform: scale(1); } }
+
+        /* אזור הקלט - הפתרון לבעיית המקלדת */
+        .rating-input { 
+            background: var(--card-bg); 
+            padding: 10px; 
+            border-radius: 15px; 
+            transition: all 0.3s ease;
+            z-index: 100;
         }
 
-        .input-group { text-align: right; margin-bottom: 15px; }
+        /* במצב הקלדה בנייד - התיבה "קופצת" למעלה כדי שלא תוסתר */
+        @media (max-width: 768px) {
+            body.keyboard-open .rating-input {
+                position: fixed;
+                top: 10px;
+                left: 10px;
+                right: 10px;
+                box-shadow: 0 0 20px rgba(0,0,0,0.3);
+                border: 2px solid var(--primary);
+                padding: 15px;
+            }
+            body.keyboard-open .container { margin-top: 250px; } /* מונע מהתוכן להיעלם תחת התיבה */
+        }
+
         input, textarea { 
             width: 100%; padding: 12px; border-radius: 12px; 
             border: 1px solid var(--border-color); background: var(--input-bg);
-            color: var(--text-color); box-sizing: border-box; font-size: 16px; outline: none;
+            color: var(--text-color); box-sizing: border-box; font-size: 16px; outline: none; margin-bottom: 10px;
         }
         
-        /* אזור הזנת הדירוג - עם מעבר חלק */
-        .rating-input { transition: transform 0.3s ease; }
-
         button.submit-btn { 
             background: var(--primary); color: white; border: none; 
             padding: 15px; border-radius: 12px; width: 100%; 
-            font-weight: bold; font-size: 16px; cursor: pointer; transition: 0.2s;
-            margin-top: 10px;
+            font-weight: bold; font-size: 16px; cursor: pointer;
         }
-        button.submit-btn:active { transform: scale(0.95); }
 
-        .theme-toggle, .admin-toggle { 
-            position: absolute; top: -40px; background: var(--card-bg); 
-            border: none; width: 40px; height: 40px; border-radius: 50%; 
-            cursor: pointer; box-shadow: 0 2px 10px rgba(0,0,0,0.1); font-size: 18px;
-        }
-        .theme-toggle { left: 0; }
-        .admin-toggle { left: 50px; }
+        .theme-toggle, .admin-toggle { position: absolute; top: -40px; background: var(--card-bg); border: none; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; box-shadow: 0 2px 10px rgba(0,0,0,0.1); font-size: 18px; }
+        .theme-toggle { left: 0; } .admin-toggle { left: 50px; }
 
-        #reviews { margin-top: 25px; text-align: right; }
-        .review-card { 
-            background: var(--input-bg); padding: 15px; 
-            border-radius: 15px; margin-bottom: 10px; position: relative; 
-        }
-        .review-header { display: flex; justify-content: space-between; align-items: center; }
-        .reviewer-name { font-weight: bold; font-size: 1.05rem; }
-        .time-ago { font-size: 0.75rem; color: var(--sub-text); }
-        .stars-display { color: var(--star-active); font-size: 14px; margin-top: 4px; }
-        .del-btn { background: #ff4d4d; color: white; border: none; padding: 5px 10px; border-radius: 8px; cursor: pointer; font-size: 11px; }
-
-        @media (max-width: 400px) {
-            .container { margin-top: 70px; padding: 15px; }
-            .average-score { font-size: 2.5rem; }
-        }
+        #reviews { width: 100%; max-width: 500px; margin-top: 25px; text-align: right; }
+        .review-card { background: var(--card-bg); padding: 15px; border-radius: 15px; margin-bottom: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .stars-display { color: var(--star-active); }
+        .del-btn { background: #ff4d4d; color: white; border: none; padding: 5px 10px; border-radius: 8px; cursor: pointer; float: left; }
     </style>
 </head>
 <body>
@@ -122,22 +101,20 @@
     <div class="stats-box">
         <p class="average-score" id="avgScore">0.0</p>
         <div id="avgStars" class="stars-display" style="font-size: 20px;"></div>
-        <p class="total-count" id="totalReviews">טוען...</p>
+        <p id="totalReviews" style="font-size: 0.9rem; color: var(--sub-text);">טוען...</p>
     </div>
 
     <div class="rating-input" id="ratingArea">
         <input type="text" id="reviewerName" placeholder="איך קוראים לך?">
-        
         <div class="star-rating" id="starInput">
             <span data-v="1">★</span><span data-v="2">★</span><span data-v="3">★</span><span data-v="4">★</span><span data-v="5">★</span>
         </div>
-        
-        <textarea id="carComment" rows="3" placeholder="מה חשבת על הרכב?"></textarea>
+        <textarea id="carComment" rows="2" placeholder="מה חשבת על הרכב?"></textarea>
         <button class="submit-btn" onclick="submitReview()">פרסם חוות דעת</button>
     </div>
-
-    <div id="reviews"></div>
 </div>
+
+<div id="reviews"></div>
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
@@ -157,24 +134,22 @@
   const db = getDatabase(app);
   const reviewsRef = ref(db, 'reviews');
 
-  let isAdmin = false;
-  let selectedRating = 0;
-  let currentData = null;
+  let isAdmin = false, selectedRating = 0, currentData = null;
 
-  // פונקציה למניעת הסתרה על ידי המקלדת
-  const commentBox = document.getElementById('carComment');
-  const ratingArea = document.getElementById('ratingArea');
+  // טיפול במקלדת בנייד
+  const inputs = [document.getElementById('carComment'), document.getElementById('reviewerName')];
+  inputs.forEach(el => {
+      el.addEventListener('focus', () => document.body.classList.add('keyboard-open'));
+      el.addEventListener('blur', () => {
+          // מחכה רגע כדי לאפשר לחיצה על כפתור השליחה לפני שהתיבה חוזרת למקום
+          setTimeout(() => {
+              if(!document.activeElement.tagName.match(/INPUT|TEXTAREA/)) {
+                  document.body.classList.remove('keyboard-open');
+              }
+          }, 100);
+      });
+  });
 
-  const scrollToInput = () => {
-      setTimeout(() => {
-          ratingArea.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }, 300);
-  };
-
-  commentBox.addEventListener('focus', scrollToInput);
-  document.getElementById('reviewerName').addEventListener('focus', scrollToInput);
-
-  // כוכבים אינטראקטיביים
   const stars = document.querySelectorAll('#starInput span');
   stars.forEach((star, index) => {
     star.addEventListener('click', () => {
@@ -186,24 +161,19 @@
   function timeAgo(ts) {
     const diff = Date.now() - ts;
     const mins = Math.floor(diff / 60000);
-    const hrs = Math.floor(mins / 60);
-    const days = Math.floor(hrs / 24);
-    if (mins < 1) return "ממש עכשיו";
+    if (mins < 1) return "עכשיו";
     if (mins < 60) return `לפני ${mins} דק'`;
-    if (hrs < 24) return `לפני ${hrs} שע'`;
-    return `לפני ${days} ימים`;
+    if (mins < 1440) return `לפני ${Math.floor(mins/60)} שע'`;
+    return `לפני ${Math.floor(mins/1440)} ימים`;
   }
 
-  onValue(ref(db, 'config/carImageUrl'), (s) => {
-    if (s.val()) document.getElementById('carImage').src = s.val();
-  });
+  onValue(ref(db, 'config/carImageUrl'), (s) => { if (s.val()) document.getElementById('carImage').src = s.val(); });
 
   window.adminLogin = () => {
     const u = prompt("משתמש:"), p = prompt("סיסמה:");
     if (u === "admin" && p === "1234") {
       isAdmin = true;
       document.getElementById('changePicBtn').style.display = 'flex';
-      alert("שלום אדוני המנהל!");
       renderReviews(currentData);
     }
   };
@@ -212,7 +182,7 @@
     let url = prompt("קישור שיתוף תמונה מ-Google Drive:");
     if (url && url.includes("drive.google.com")) {
       const id = url.split('/d/')[1].split('/')[0];
-      url = `https://lh3.googleusercontent.com/u/0/d/${id}`;
+      url = `https://drive.google.com/uc?export=view&id=${id}`;
       set(ref(db, 'config/carImageUrl'), url);
     }
   };
@@ -220,53 +190,44 @@
   window.submitReview = () => {
     const name = document.getElementById('reviewerName').value || "אורח";
     const comment = document.getElementById('carComment').value;
-    if (!selectedRating) return alert("דרגו בכוכבים!");
-    if (!comment.trim()) return alert("כתבו משהו...");
+    if (!selectedRating || !comment.trim()) return alert("מלאו דירוג ותגובה");
     
     push(reviewsRef, { name, rating: selectedRating, comment, timestamp: Date.now() });
     document.getElementById('carComment').value = "";
     document.getElementById('reviewerName').value = "";
     selectedRating = 0;
     stars.forEach(s => s.classList.remove('active'));
-    // סגירת מקלדת בנייד
+    document.body.classList.remove('keyboard-open');
     document.activeElement.blur();
   };
 
   window.deleteReview = (id) => { if (confirm("למחוק?")) remove(ref(db, 'reviews/' + id)); };
 
-  onValue(reviewsRef, (s) => {
-    currentData = s.val();
-    renderReviews(currentData);
-  });
+  onValue(reviewsRef, (s) => { currentData = s.val(); renderReviews(currentData); });
 
   function renderReviews(data) {
     const div = document.getElementById('reviews');
     div.innerHTML = "";
-    if (!data) { 
-        document.getElementById('totalReviews').innerText = "אין דירוגים";
-        document.getElementById('avgScore').innerText = "0.0";
-        return; 
-    }
-
+    if (!data) return;
     let sum = 0, count = 0;
     Object.keys(data).reverse().forEach(id => {
       const r = data[id];
       sum += r.rating; count++;
       div.innerHTML += `
         <div class="review-card">
-          <div class="review-header">
-            <span class="reviewer-name">${r.name}</span>
-            <span class="time-ago">${timeAgo(r.timestamp)}</span>
+          <div style="display:flex; justify-content:space-between">
+            <strong>${r.name}</strong>
+            <small>${timeAgo(r.timestamp)}</small>
           </div>
           <div class="stars-display">${"★".repeat(r.rating)}</div>
-          <p style="margin:8px 0 0; font-size:15px;">${r.comment}</p>
-          ${isAdmin ? `<button class="del-btn" style="margin-top:10px" onclick="deleteReview('${id}')">מחק 🗑️</button>` : ''}
+          <p>${r.comment}</p>
+          ${isAdmin ? `<button class="del-btn" onclick="deleteReview('${id}')">מחק</button>` : ''}
         </div>`;
     });
     const avg = (sum / count).toFixed(1);
     document.getElementById('avgScore').innerText = avg;
     document.getElementById('avgStars').innerHTML = "★".repeat(Math.round(avg));
-    document.getElementById('totalReviews').innerText = `מבוסס על ${count} חוות דעת`;
+    document.getElementById('totalReviews').innerText = `${count} חוות דעת`;
   }
 
   window.toggleTheme = () => {
@@ -275,10 +236,7 @@
     localStorage.setItem("theme", t);
     document.getElementById("themeBtn").innerText = t === "dark" ? "☀️" : "🌙";
   };
-  if (localStorage.getItem("theme") === "dark") {
-    document.documentElement.setAttribute("data-theme", "dark");
-    document.getElementById("themeBtn").innerText = "☀️";
-  }
+  if (localStorage.getItem("theme") === "dark") document.documentElement.setAttribute("data-theme", "dark");
 </script>
 </body>
 </html>
