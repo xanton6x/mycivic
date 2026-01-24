@@ -6,89 +6,48 @@
     <title>דרגו את ה-Civic שלי</title>
     <style>
         :root {
-            --bg-color: #f0f2f5;
-            --card-bg: #ffffff;
-            --text-color: #1c1e21;
-            --sub-text: #65676b;
-            --border-color: #ddd;
-            --input-bg: #fff;
+            --bg-color: #f0f2f5; --card-bg: #ffffff; --text-color: #1c1e21;
+            --sub-text: #65676b; --border-color: #ddd; --input-bg: #fff;
         }
-
         [data-theme="dark"] {
-            --bg-color: #18191a;
-            --card-bg: #242526;
-            --text-color: #e4e6eb;
-            --sub-text: #b0b3b8;
-            --border-color: #3e4042;
-            --input-bg: #3a3b3c;
+            --bg-color: #18191a; --card-bg: #242526; --text-color: #e4e6eb;
+            --sub-text: #b0b3b8; --border-color: #3e4042; --input-bg: #3a3b3c;
         }
-
-        body { 
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-            background: var(--bg-color); 
-            text-align: center; 
-            padding: 20px; 
-            color: var(--text-color);
-            transition: all 0.3s ease;
-        }
-
-        .container { 
-            max-width: 600px; 
-            margin: auto; 
-            background: var(--card-bg); 
-            padding: 30px; 
-            border-radius: 20px; 
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2); 
-        }
-
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg-color); text-align: center; padding: 20px; color: var(--text-color); transition: 0.3s; }
+        .container { max-width: 600px; margin: auto; background: var(--card-bg); padding: 30px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); position: relative; }
         img { width: 100%; border-radius: 15px; margin-bottom: 20px; object-fit: cover; max-height: 400px; }
-        
         .stats-box { background: var(--bg-color); padding: 15px; border-radius: 12px; margin-bottom: 20px; border: 1px solid var(--border-color); }
         .average-score { font-size: 2.5rem; font-weight: bold; color: #f39c12; margin: 0; }
-        .total-reviews { font-size: 0.9rem; color: var(--sub-text); }
-
         .rating-input { margin: 20px 0; background: var(--card-bg); padding: 15px; border-radius: 12px; border: 1px solid var(--border-color); }
-        
-        select, textarea { 
-            width: 100%; padding: 12px; margin-top: 10px; 
-            border: 1px solid var(--border-color); 
-            border-radius: 8px; box-sizing: border-box; 
-            font-size: 16px; background: var(--input-bg); color: var(--text-color);
-        }
-        
-        button { background: #1877f2; color: white; border: none; padding: 12px 30px; border-radius: 8px; cursor: pointer; margin-top: 15px; font-weight: bold; width: 100%; transition: background 0.3s; }
-        button:hover { background: #166fe5; }
-
-        .theme-toggle {
-            position: fixed; top: 20px; left: 20px; background: #1877f2; color: white; border: none;
-            padding: 10px; border-radius: 50%; cursor: pointer; width: 45px; height: 45px;
-            font-size: 20px; display: flex; align-items: center; justify-content: center;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.2); z-index: 1000;
-        }
-
+        input, select, textarea { width: 100%; padding: 12px; margin-top: 10px; border: 1px solid var(--border-color); border-radius: 8px; box-sizing: border-box; background: var(--input-bg); color: var(--text-color); }
+        button { background: #1877f2; color: white; border: none; padding: 12px 30px; border-radius: 8px; cursor: pointer; margin-top: 15px; font-weight: bold; width: 100%; }
+        .theme-toggle, .admin-toggle { position: fixed; top: 20px; background: #1877f2; color: white; border: none; padding: 10px; border-radius: 50%; cursor: pointer; width: 45px; height: 45px; font-size: 20px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(0,0,0,0.2); z-index: 1000; }
+        .theme-toggle { left: 20px; }
+        .admin-toggle { left: 75px; background: #42b72a; }
         #reviews { margin-top: 30px; text-align: right; }
-        .review-card { border-bottom: 1px solid var(--border-color); padding: 15px 0; }
-        .stars { color: #f39c12; font-size: 1.2rem; }
-        .review-text { margin: 5px 0 0; }
-        .review-date { font-size: 0.8rem; color: var(--sub-text); }
+        .review-card { border-bottom: 1px solid var(--border-color); padding: 15px 0; position: relative; }
+        .stars { color: #f39c12; }
+        .reviewer-name { font-weight: bold; display: block; margin-bottom: 5px; }
+        .delete-btn { position: absolute; left: 0; top: 15px; background: #ff4d4d; color: white; border: none; border-radius: 5px; cursor: pointer; padding: 5px 10px; display: none; }
     </style>
 </head>
 <body>
 
 <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn">🌙</button>
+<button class="admin-toggle" onclick="adminLogin()" title="כניסת מנהל">🔑</button>
 
 <div class="container">
-    <h1>מה דעתכם על ה-Civic שלי?</h1>
+    <h1>דירוג ה-Civic שלי</h1>
     <img src="car.jpg" alt="Honda Civic">
 
     <div class="stats-box">
         <p class="average-score" id="avgScore">0.0</p>
-        <div class="stars" id="avgStars"></div>
-        <p class="total-reviews" id="totalReviews">טוען נתונים...</p>
+        <div id="avgStars"></div>
+        <p id="totalReviews">טוען נתונים...</p>
     </div>
 
     <div class="rating-input">
-        <label>בחר דירוג:</label>
+        <input type="text" id="reviewerName" placeholder="השם שלכם">
         <select id="carRating">
             <option value="5">⭐⭐⭐⭐⭐ (מעולה)</option>
             <option value="4">⭐⭐⭐⭐ (טוב מאד)</option>
@@ -96,19 +55,17 @@
             <option value="2">⭐⭐ (טעון שיפור)</option>
             <option value="1">⭐ (לא אהבתי)</option>
         </select>
-        <textarea id="carComment" placeholder="כתבו חוות דעת קצרה..."></textarea>
+        <textarea id="carComment" placeholder="כתבו חוות דעת..."></textarea>
         <button onclick="submitReview()">שלח דירוג</button>
     </div>
 
     <hr>
-    <h3>חוות דעת מהגולשים:</h3>
     <div id="reviews">טוען חוות דעת...</div>
 </div>
 
 <script type="module">
-  // שימוש ב-SDK של Realtime Database
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-  import { getDatabase, ref, push, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+  import { getDatabase, ref, push, onValue, remove } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyCiBOPWWSgKlz0IHVvTt4jktfHLI1hsYQc",
@@ -124,71 +81,96 @@
   const db = getDatabase(app);
   const reviewsRef = ref(db, 'reviews');
 
-  // לוגיקת Dark Mode
-  window.toggleTheme = () => {
-      const currentTheme = document.documentElement.getAttribute("data-theme");
-      const targetTheme = currentTheme === "dark" ? "light" : "dark";
-      document.documentElement.setAttribute("data-theme", targetTheme);
-      localStorage.setItem("theme", targetTheme);
-      document.getElementById("themeBtn").innerText = targetTheme === "dark" ? "☀️" : "🌙";
+  let isAdmin = false;
+
+  // פונקציית התחברות מנהל
+  window.adminLogin = () => {
+      const user = prompt("שם משתמש:");
+      const pass = prompt("סיסמה:");
+      if (user === "admin" && pass === "1234") {
+          isAdmin = true;
+          alert("מחובר כמנהל! כפתורי מחיקה יופיעו כעת.");
+          renderReviews(); // רענון התצוגה להצגת כפתורי מחיקה
+      } else {
+          alert("פרטים שגויים.");
+      }
   };
 
-  const savedTheme = localStorage.getItem("theme") || "light";
-  document.documentElement.setAttribute("data-theme", savedTheme);
-  document.getElementById("themeBtn").innerText = savedTheme === "dark" ? "☀️" : "🌙";
+  window.toggleTheme = () => {
+      const target = document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark";
+      document.documentElement.setAttribute("data-theme", target);
+      localStorage.setItem("theme", target);
+      document.getElementById("themeBtn").innerText = target === "dark" ? "☀️" : "🌙";
+  };
 
-  // שליחת נתונים ל-Realtime Database
   window.submitReview = () => {
+    const name = document.getElementById('reviewerName').value || "אורח";
     const rating = document.getElementById('carRating').value;
     const comment = document.getElementById('carComment').value;
     if (comment.trim() === "") return alert("בבקשה כתבו חוות דעת");
 
     push(reviewsRef, {
+      name: name,
       rating: parseInt(rating),
       comment: comment,
       timestamp: Date.now()
     }).then(() => {
         document.getElementById('carComment').value = "";
-        alert("תודה! הדירוג התקבל.");
-    }).catch((error) => {
-        console.error("Error:", error);
-        alert("שגיאה בשליחה. וודא שפתחת את ה-Rules ב-Firebase.");
+        document.getElementById('reviewerName').value = "";
     });
   };
 
-  // האזנה לשינויים בזמן אמת
+  window.deleteReview = (id) => {
+      if (confirm("בטוח שברצונך למחוק תגובה זו?")) {
+          remove(ref(db, 'reviews/' + id));
+      }
+  };
+
+  let currentData = {};
   onValue(reviewsRef, (snapshot) => {
-    const data = snapshot.val();
+    currentData = snapshot.val();
+    renderReviews();
+  });
+
+  function renderReviews() {
     const reviewsDiv = document.getElementById('reviews');
-    reviewsDiv.innerHTML = "";
-    
-    if (!data) {
+    reviewsDiv.innerHTML = "<h3>חוות דעת:</h3>";
+    if (!currentData) {
         document.getElementById('totalReviews').innerText = "תהיו הראשונים לדרג!";
         return;
     }
 
     let totalScore = 0, count = 0;
-    // הפיכת האובייקט למערך וסידור לפי זמן (חדש למעלה)
-    const reviewsArray = Object.values(data).reverse();
+    // הפיכת האובייקט למערך עם ה-ID שלו
+    const sortedKeys = Object.keys(currentData).reverse();
 
-    reviewsArray.forEach(review => {
+    sortedKeys.forEach(id => {
+      const review = currentData[id];
       totalScore += review.rating;
       count++;
       const date = new Date(review.timestamp).toLocaleDateString('he-IL');
       reviewsDiv.innerHTML += `
         <div class="review-card">
+            ${isAdmin ? `<button class="delete-btn" style="display:block" onclick="deleteReview('${id}')">🗑️</button>` : ''}
+            <span class="reviewer-name">${review.name}</span>
             <div class="stars">${"⭐".repeat(review.rating)}</div>
             <p class="review-text">${review.comment}</p>
-            <span class="review-date">${date}</span>
+            <small style="color:var(--sub-text)">${date}</small>
         </div>
       `;
     });
 
     const avg = (totalScore / count).toFixed(1);
     document.getElementById('avgScore').innerText = avg;
-    document.getElementById('avgStars').innerText = "⭐".repeat(Math.round(avg));
+    document.getElementById('avgStars').innerHTML = "⭐".repeat(Math.round(avg));
     document.getElementById('totalReviews').innerText = `מבוסס על ${count} דירוגים`;
-  });
+  }
+
+  // טעינת הגדרת צבעים
+  if (localStorage.getItem("theme") === "dark") {
+      document.documentElement.setAttribute("data-theme", "dark");
+      document.getElementById("themeBtn").innerText = "☀️";
+  }
 </script>
 
 </body>
