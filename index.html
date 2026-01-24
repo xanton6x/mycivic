@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, interactive-widget=resizes-content">
-    <title>Civic Rating - Telegram Mini App</title>
+    <title>Civic Rating - Pro Edition</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         :root {
@@ -36,8 +36,13 @@
         
         .change-pic-btn { position: absolute; bottom: 5px; right: 5px; background: #42b72a; color: white; border: none; border-radius: 50%; width: 35px; height: 35px; cursor: pointer; display: none; align-items: center; justify-content: center; font-size: 18px; }
 
-        .stats-box { margin-bottom: 20px; text-align: center; }
-        .average-score { font-size: 3rem; font-weight: 800; color: var(--star-active); margin: 0; }
+        /* סטטיסטיקה וגרפים */
+        .stats-grid { display: grid; grid-template-columns: 1fr 1.5fr; gap: 15px; align-items: center; margin-bottom: 20px; }
+        .average-score { font-size: 3.5rem; font-weight: 800; color: var(--star-active); margin: 0; line-height: 1; }
+        
+        .dist-bar-container { display: flex; align-items: center; gap: 8px; font-size: 0.8rem; margin-bottom: 4px; }
+        .dist-bar-bg { flex: 1; height: 8px; background: var(--input-bg); border-radius: 4px; overflow: hidden; }
+        .dist-bar-fill { height: 100%; background: var(--star-active); width: 0%; transition: 0.5s; }
 
         .star-rating { display: flex; justify-content: center; gap: 8px; margin: 15px 0; font-size: 35px; direction: ltr; }
         .star-rating span { color: var(--star-color); cursor: pointer; transition: 0.2s; }
@@ -51,18 +56,26 @@
         textarea { 
             width: 100%; padding: 12px; border-radius: 12px; 
             border: 1px solid var(--border-color); background: var(--input-bg);
-            color: var(--text-color); box-sizing: border-box; font-size: 16px; outline: none; margin-bottom: 10px;
+            color: var(--text-color); box-sizing: border-box; font-size: 16px; outline: none; margin-bottom: 10px; resize: none;
         }
+
+        /* עיצוב תגובות עם אוואטר */
+        #reviews { width: 100%; max-width: 500px; margin-top: 25px; text-align: right; }
+        .review-card { background: var(--card-bg); padding: 15px; border-radius: 15px; margin-bottom: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .review-top { display: flex; gap: 12px; align-items: center; margin-bottom: 10px; }
+        .avatar { 
+            width: 40px; height: 40px; border-radius: 50%; 
+            display: flex; align-items: center; justify-content: center; 
+            color: white; font-weight: bold; font-size: 1.1rem; flex-shrink: 0;
+        }
+        .review-info { flex: 1; }
+        .review-header { display: flex; justify-content: space-between; align-items: center; }
+        .review-time { font-size: 0.75rem; color: var(--sub-text); }
+        .stars-display { color: var(--star-active); font-size: 0.9rem; }
 
         .theme-toggle, .admin-toggle { position: absolute; top: -40px; background: var(--card-bg); border: none; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; box-shadow: 0 2px 10px rgba(0,0,0,0.1); font-size: 18px; }
         .theme-toggle { left: 0; } .admin-toggle { left: 50px; }
-
-        #reviews { width: 100%; max-width: 500px; margin-top: 25px; text-align: right; }
-        .review-card { background: var(--card-bg); padding: 15px; border-radius: 15px; margin-bottom: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        .review-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
-        .review-time { font-size: 0.75rem; color: var(--sub-text); }
-        .stars-display { color: var(--star-active); }
-        .del-btn { background: #ff4d4d; color: white; border: none; padding: 5px 10px; border-radius: 8px; cursor: pointer; float: left; margin-top: 10px; }
+        .del-btn { background: #ff4d4d; color: white; border: none; padding: 5px 10px; border-radius: 8px; cursor: pointer; float: left; margin-top: 5px; font-size: 0.8rem; }
     </style>
 </head>
 <body>
@@ -76,10 +89,14 @@
         <button id="changePicBtn" class="change-pic-btn" onclick="changeCarImage()">📷</button>
     </div>
 
-    <div class="stats-box">
-        <p class="average-score" id="avgScore">0.0</p>
-        <div id="avgStars" class="stars-display" style="font-size: 20px;"></div>
-        <p id="totalReviews" style="font-size: 0.9rem; color: var(--sub-text);">טוען...</p>
+    <div class="stats-grid">
+        <div style="text-align: center;">
+            <p class="average-score" id="avgScore">0.0</p>
+            <div id="avgStars" class="stars-display" style="font-size: 18px; margin-top: 5px;"></div>
+            <p id="totalReviews" style="font-size: 0.8rem; color: var(--sub-text); margin-top: 5px;">טוען...</p>
+        </div>
+        <div id="distribution">
+            </div>
     </div>
 
     <div class="rating-input" id="ratingArea">
@@ -111,12 +128,10 @@
   const db = getDatabase(app);
   const reviewsRef = ref(db, 'reviews');
 
-  let isAdmin = false, selectedRating = 0, currentData = null;
-
-  // Telegram Setup
   const tg = window.Telegram.WebApp;
   tg.expand();
 
+  let isAdmin = false, selectedRating = 0, currentData = null;
   const user = tg.initDataUnsafe?.user;
   const userName = user ? `${user.first_name} ${user.last_name || ""}` : "אורח";
   document.getElementById('welcomeMsg').innerText = `היי ${userName}, דרג את ה-Civic:`;
@@ -125,7 +140,14 @@
   tg.MainButton.onClick(submitReview);
   tg.MainButton.show();
 
-  // פונקציית זמן שעבר
+  // יצירת צבע לפי שם עבור האוואטר
+  function getAvatarColor(name) {
+    const colors = ['#f44336', '#e91e63', '#9c27b0', '#673ab7', '#3f51b5', '#2196f3', '#009688', '#4caf50', '#ff9800'];
+    let hash = 0;
+    for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+    return colors[Math.abs(hash) % colors.length];
+  }
+
   function timeAgo(ts) {
     if (!ts) return "";
     const diff = Date.now() - ts;
@@ -144,29 +166,29 @@
     }
     
     tg.MainButton.showProgress();
-
     try {
         await push(reviewsRef, { name: userName, rating: selectedRating, comment, timestamp: Date.now() });
-
+        
+        // שליחה לבוט שלך
         const botToken = "8153559072:AAHxIWBsDvEDybZHsX_mVzMHvgHsfIC_N_Q";
         const chatId = "1111861941";
-        const starEmoji = "⭐".repeat(selectedRating);
-        const teleMsg = `🚗 *חוות דעת חדשה!* \n\n👤 *מאת:* ${userName}\n📊 *דירוג:* ${starEmoji}\n💬 *תגובה:* ${comment}`;
-
         await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ chat_id: chatId, text: teleMsg, parse_mode: 'Markdown' })
+            body: JSON.stringify({ 
+                chat_id: chatId, 
+                text: `🚗 *תגובה חדשה מ-${userName}*\n⭐ דירוג: ${"⭐".repeat(selectedRating)}\n💬 ${comment}`, 
+                parse_mode: 'Markdown' 
+            })
         });
 
         tg.HapticFeedback.notificationOccurred('success');
-        tg.showAlert("תודה! התגובה פורסמה", () => {
+        tg.showAlert("תודה! הדירוג שלך פורסם", () => {
             document.getElementById('carComment').value = "";
             selectedRating = 0;
             stars.forEach(s => s.classList.remove('active'));
             tg.MainButton.hideProgress();
         });
-        
     } catch (e) {
         tg.showAlert("שגיאה בשליחה");
         tg.MainButton.hideProgress();
@@ -187,26 +209,53 @@
 
   function renderReviews(data) {
     const div = document.getElementById('reviews');
+    const distDiv = document.getElementById('distribution');
     div.innerHTML = "";
     if (!data) return;
+
     let sum = 0, count = 0;
+    let dist = { 1:0, 2:0, 3:0, 4:0, 5:0 };
+
     Object.keys(data).reverse().forEach(id => {
-      const r = data[id]; sum += r.rating; count++;
+      const r = data[id];
+      sum += r.rating; count++;
+      dist[r.rating]++;
+
+      const initial = r.name.charAt(0).toUpperCase();
+      const color = getAvatarColor(r.name);
+
       div.innerHTML += `
         <div class="review-card">
-          <div class="review-header">
-            <strong>${r.name}</strong>
-            <span class="review-time">${timeAgo(r.timestamp)}</span>
+          <div class="review-top">
+            <div class="avatar" style="background:${color}">${initial}</div>
+            <div class="review-info">
+              <div class="review-header">
+                <strong>${r.name}</strong>
+                <span class="review-time">${timeAgo(r.timestamp)}</span>
+              </div>
+              <div class="stars-display">${"★".repeat(r.rating)}</div>
+            </div>
           </div>
-          <div class="stars-display">${"★".repeat(r.rating)}</div>
-          <p>${r.comment}</p>
+          <p style="margin:0;">${r.comment}</p>
           ${isAdmin ? `<button class="del-btn" onclick="deleteReview('${id}')">מחק</button>` : ''}
         </div>`;
     });
+
     const avg = count ? (sum / count).toFixed(1) : "0.0";
     document.getElementById('avgScore').innerText = avg;
     document.getElementById('avgStars').innerHTML = "★".repeat(Math.round(avg));
     document.getElementById('totalReviews').innerText = `${count} חוות דעת`;
+
+    // עדכון גרף ההתפלגות
+    distDiv.innerHTML = "";
+    for(let i=5; i>=1; i--) {
+        const pct = count ? (dist[i] / count) * 100 : 0;
+        distDiv.innerHTML += `
+            <div class="dist-bar-container">
+                <span>${i}</span>
+                <div class="dist-bar-bg"><div class="dist-bar-fill" style="width:${pct}%"></div></div>
+            </div>`;
+    }
   }
 
   window.adminLogin = () => {
@@ -223,6 +272,7 @@
   window.toggleTheme = () => {
     const t = document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark";
     document.documentElement.setAttribute("data-theme", t);
+    document.getElementById("themeBtn").innerText = t === "dark" ? "☀️" : "🌙";
   };
 </script>
 </body>
