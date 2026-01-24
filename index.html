@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, interactive-widget=resizes-content">
-    <title>Civic Rating - Pro Edition</title>
+    <title>Civic Rating - Ultra Edition</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         :root {
@@ -33,7 +33,8 @@
 
         .profile-container { position: relative; width: 120px; height: 120px; margin: -60px auto 15px; }
         .car-pic { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; border: 5px solid var(--card-bg); box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
-        
+        .change-pic-btn { position: absolute; bottom: 5px; right: 5px; background: #42b72a; color: white; border: none; border-radius: 50%; width: 35px; height: 35px; cursor: pointer; display: none; align-items: center; justify-content: center; font-size: 18px; }
+
         .stats-grid { display: grid; grid-template-columns: 1fr 1.5fr; gap: 15px; align-items: center; margin-bottom: 20px; }
         .average-score { font-size: 3.5rem; font-weight: 800; color: var(--star-active); margin: 0; line-height: 1; }
         
@@ -45,34 +46,26 @@
         .star-rating span { color: var(--star-color); cursor: pointer; transition: 0.2s; }
         .star-rating span.active { color: var(--star-active); animation: pop 0.3s ease-out; }
 
-        .rating-input { background: var(--card-bg); padding: 10px; border-radius: 15px; }
-        
-        /* עיצוב התגיות */
-        .tags-container { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 15px; justify-content: center; }
-        .tag-chip { 
-            background: var(--input-bg); border: 1px solid var(--border-color);
-            padding: 6px 12px; border-radius: 20px; font-size: 0.85rem;
-            cursor: pointer; transition: 0.2s; user-select: none;
-        }
-        .tag-chip:active { transform: scale(0.95); background: var(--primary); color: white; }
+        /* Tags */
+        .tags-container { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; justify-content: center; }
+        .tag-chip { background: var(--input-bg); border: 1px solid var(--border-color); padding: 5px 10px; border-radius: 15px; font-size: 0.8rem; cursor: pointer; transition: 0.2s; }
+        .tag-chip:active { transform: scale(0.9); background: var(--primary); color: white; }
 
-        textarea { 
-            width: 100%; padding: 12px; border-radius: 12px; 
-            border: 1px solid var(--border-color); background: var(--input-bg);
-            color: var(--text-color); box-sizing: border-box; font-size: 16px; outline: none; margin-bottom: 10px; resize: none;
-        }
+        textarea { width: 100%; padding: 12px; border-radius: 12px; border: 1px solid var(--border-color); background: var(--input-bg); color: var(--text-color); box-sizing: border-box; font-size: 16px; outline: none; margin-bottom: 10px; resize: none; }
 
+        /* Reviews with Avatars */
         #reviews { width: 100%; max-width: 500px; margin-top: 25px; text-align: right; }
         .review-card { background: var(--card-bg); padding: 15px; border-radius: 15px; margin-bottom: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        .avatar { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; flex-shrink: 0; }
         .review-top { display: flex; gap: 12px; align-items: center; margin-bottom: 10px; }
+        .avatar { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; flex-shrink: 0; }
         .review-info { flex: 1; }
         .review-header { display: flex; justify-content: space-between; align-items: center; }
         .review-time { font-size: 0.75rem; color: var(--sub-text); }
-        .stars-display { color: var(--star-active); font-size: 0.9rem; }
-        
+        .stars-display { color: var(--star-active); font-size: 0.85rem; }
+
         .theme-toggle, .admin-toggle { position: absolute; top: -40px; background: var(--card-bg); border: none; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; box-shadow: 0 2px 10px rgba(0,0,0,0.1); font-size: 18px; }
         .theme-toggle { left: 0; } .admin-toggle { left: 50px; }
+        .del-btn { background: #ff4d4d; color: white; border: none; padding: 5px 10px; border-radius: 8px; cursor: pointer; float: left; margin-top: 5px; font-size: 0.75rem; }
     </style>
 </head>
 <body>
@@ -83,20 +76,20 @@
 
     <div class="profile-container">
         <img id="carImage" src="https://via.placeholder.com/150?text=Civic" class="car-pic">
+        <button id="changePicBtn" class="change-pic-btn" onclick="changeCarImage()">📷</button>
     </div>
 
     <div class="stats-grid">
         <div style="text-align: center;">
             <p class="average-score" id="avgScore">0.0</p>
-            <div id="avgStars" class="stars-display" style="font-size: 18px;"></div>
-            <p id="totalReviews" style="font-size: 0.8rem; color: var(--sub-text);"></p>
+            <div id="avgStars" class="stars-display"></div>
+            <p id="totalReviews" style="font-size: 0.8rem; color: var(--sub-text); margin-top: 5px;"></p>
         </div>
         <div id="distribution"></div>
     </div>
 
     <div class="rating-input">
-        <div id="welcomeMsg" style="text-align: center; font-weight: bold; margin-bottom: 10px;"></div>
-        
+        <div id="welcomeMsg" style="text-align: center; font-weight: bold; margin-bottom: 5px;"></div>
         <div class="star-rating" id="starInput">
             <span data-v="1">★</span><span data-v="2">★</span><span data-v="3">★</span><span data-v="4">★</span><span data-v="5">★</span>
         </div>
@@ -106,7 +99,6 @@
             <div class="tag-chip" onclick="addTag('🔥 הצגה')">🔥 הצגה</div>
             <div class="tag-chip" onclick="addTag('🔊 איזה סאונד')">🔊 איזה סאונד</div>
             <div class="tag-chip" onclick="addTag('💎 שמורה')">💎 שמורה</div>
-            <div class="tag-chip" onclick="addTag('🏎️ קרבית')">🏎️ קרבית</div>
         </div>
 
         <textarea id="carComment" rows="3" placeholder="מה חשבת על הרכב?"></textarea>
@@ -139,54 +131,59 @@
   let isAdmin = false, selectedRating = 0, currentData = null;
   const user = tg.initDataUnsafe?.user;
   const userName = user ? `${user.first_name} ${user.last_name || ""}` : "אורח";
-  document.getElementById('welcomeMsg').innerText = `היי ${userName}, איך ה-Civic?`;
+  document.getElementById('welcomeMsg').innerText = `היי ${userName}, דרג אותי:`;
 
   tg.MainButton.setText("פרסם חוות דעת 🚗");
-  tg.MainButton.onClick(() => submitReview());
+  tg.MainButton.onClick(submitReview);
   tg.MainButton.show();
 
-  // פונקציה להוספת תגית לטקסט
+  // Helper Functions
   window.addTag = (tag) => {
     const txt = document.getElementById('carComment');
-    if (txt.value.includes(tag)) return; // מונע כפילויות
-    txt.value = txt.value ? txt.value + " " + tag : tag;
-    tg.HapticFeedback.impactOccurred('light'); // רטט קטן בלחיצה
+    if (!txt.value.includes(tag)) {
+        txt.value = txt.value ? txt.value + " " + tag : tag;
+        tg.HapticFeedback.impactOccurred('light');
+    }
   };
+
+  function getAvatarColor(name) {
+    const colors = ['#f44336', '#e91e63', '#9c27b0', '#673ab7', '#3f51b5', '#2196f3', '#009688', '#4caf50'];
+    let hash = 0;
+    for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+    return colors[Math.abs(hash) % colors.length];
+  }
+
+  function timeAgo(ts) {
+    if (!ts) return "חדש";
+    const mins = Math.floor((Date.now() - ts) / 60000);
+    if (mins < 1) return "עכשיו";
+    if (mins < 60) return `לפני ${mins} דק'`;
+    if (mins < 1440) return `לפני ${Math.floor(mins/60)} שע'`;
+    return `לפני ${Math.floor(mins/1440)} ימים`;
+  }
 
   async function submitReview() {
     const comment = document.getElementById('carComment').value;
-    if (!selectedRating || !comment.trim()) {
-        tg.showAlert("חובה לבחור דירוג ולכתוב תגובה!");
-        return;
-    }
+    if (!selectedRating || !comment.trim()) return tg.showAlert("בחר דירוג וכתוב תגובה");
     
     tg.MainButton.showProgress();
     try {
         await push(reviewsRef, { name: userName, rating: selectedRating, comment, timestamp: Date.now() });
-        
-        // שליחה לטלגרם
         const botToken = "8153559072:AAHxIWBsDvEDybZHsX_mVzMHvgHsfIC_N_Q";
         const chatId = "1111861941";
         await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-                chat_id: chatId, 
-                text: `🚗 *תגובה חדשה מ-${userName}*\n⭐ דירוג: ${"⭐".repeat(selectedRating)}\n💬 ${comment}`, 
-                parse_mode: 'Markdown' 
-            })
+            body: JSON.stringify({ chat_id: chatId, text: `🚗 *תגובה חדשה מ-${userName}*\n⭐ ${selectedRating} כוכבים\n💬 ${comment}`, parse_mode: 'Markdown' })
         });
-
         tg.HapticFeedback.notificationOccurred('success');
-        tg.showAlert("תודה! הדירוג שלך פורסם", () => {
+        tg.showAlert("התגובה פורסמה!", () => {
             document.getElementById('carComment').value = "";
             selectedRating = 0;
             stars.forEach(s => s.classList.remove('active'));
             tg.MainButton.hideProgress();
         });
-    } catch (e) {
-        tg.MainButton.hideProgress();
-    }
+    } catch (e) { tg.MainButton.hideProgress(); }
   }
 
   const stars = document.querySelectorAll('#starInput span');
@@ -199,6 +196,7 @@
   });
 
   onValue(reviewsRef, (s) => { currentData = s.val(); renderReviews(currentData); });
+  onValue(ref(db, 'config/carImageUrl'), (s) => { if (s.val()) document.getElementById('carImage').src = s.val(); });
 
   function renderReviews(data) {
     const div = document.getElementById('reviews');
@@ -207,21 +205,25 @@
     if (!data) return;
 
     let sum = 0, count = 0, dist = {1:0, 2:0, 3:0, 4:0, 5:0};
-
     Object.keys(data).reverse().forEach(id => {
       const r = data[id];
       sum += r.rating; count++; dist[r.rating]++;
+      const color = getAvatarColor(r.name);
       
       div.innerHTML += `
         <div class="review-card">
           <div class="review-top">
-            <div class="avatar" style="background:#1877f2">${r.name.charAt(0)}</div>
+            <div class="avatar" style="background:${color}">${r.name.charAt(0)}</div>
             <div class="review-info">
-              <div class="review-header"><strong>${r.name}</strong></div>
+              <div class="review-header">
+                <strong>${r.name}</strong>
+                <span class="review-time">${timeAgo(r.timestamp)}</span>
+              </div>
               <div class="stars-display">${"★".repeat(r.rating)}</div>
             </div>
           </div>
-          <p>${r.comment}</p>
+          <p style="margin:0">${r.comment}</p>
+          ${isAdmin ? `<button class="del-btn" onclick="deleteReview('${id}')">מחק</button>` : ''}
         </div>`;
     });
 
@@ -233,13 +235,34 @@
     distDiv.innerHTML = "";
     for(let i=5; i>=1; i--) {
         const pct = count ? (dist[i]/count)*100 : 0;
-        distDiv.innerHTML += `
-            <div class="dist-bar-container">
-                <span>${i}</span>
-                <div class="dist-bar-bg"><div class="dist-bar-fill" style="width:${pct}%"></div></div>
-            </div>`;
+        distDiv.innerHTML += `<div class="dist-bar-container"><span>${i}</span><div class="dist-bar-bg"><div class="dist-bar-fill" style="width:${pct}%"></div></div></div>`;
     }
   }
+
+  window.adminLogin = () => {
+    const p = prompt("סיסמה:");
+    if (p === "1234") { 
+        isAdmin = true; 
+        document.getElementById('changePicBtn').style.display = 'flex'; 
+        renderReviews(currentData); 
+        tg.showAlert("מחובר כאדמין");
+    }
+  };
+
+  window.deleteReview = (id) => {
+    tg.showConfirm("למחוק תגובה?", (c) => { if(c) remove(ref(db, 'reviews/'+id)); });
+  };
+
+  window.changeCarImage = () => {
+    const url = prompt("הכנס URL של תמונה חדשה:");
+    if (url) set(ref(db, 'config/carImageUrl'), url);
+  };
+
+  window.toggleTheme = () => {
+    const t = document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark";
+    document.documentElement.setAttribute("data-theme", t);
+    document.getElementById("themeBtn").innerText = t === "dark" ? "☀️" : "🌙";
+  };
 </script>
 </body>
 </html>
