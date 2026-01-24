@@ -43,27 +43,11 @@
 
         @keyframes pop { 0% { transform: scale(1); } 50% { transform: scale(1.4); } 100% { transform: scale(1); } }
 
-        /* אזור הקלט - הפתרון לבעיית המקלדת */
         .rating-input { 
             background: var(--card-bg); 
             padding: 10px; 
             border-radius: 15px; 
-            transition: all 0.3s ease;
-            z-index: 100;
-        }
-
-        /* במצב הקלדה בנייד - התיבה "קופצת" למעלה כדי שלא תוסתר */
-        @media (max-width: 768px) {
-            body.keyboard-open .rating-input {
-                position: fixed;
-                top: 10px;
-                left: 10px;
-                right: 10px;
-                box-shadow: 0 0 20px rgba(0,0,0,0.3);
-                border: 2px solid var(--primary);
-                padding: 15px;
-            }
-            body.keyboard-open .container { margin-top: 250px; } /* מונע מהתוכן להיעלם תחת התיבה */
+            /* הסרתי את ה-Fixed שהציק */
         }
 
         input, textarea { 
@@ -136,17 +120,16 @@
 
   let isAdmin = false, selectedRating = 0, currentData = null;
 
-  // טיפול במקלדת בנייד
-  const inputs = [document.getElementById('carComment'), document.getElementById('reviewerName')];
-  inputs.forEach(el => {
-      el.addEventListener('focus', () => document.body.classList.add('keyboard-open'));
-      el.addEventListener('blur', () => {
-          // מחכה רגע כדי לאפשר לחיצה על כפתור השליחה לפני שהתיבה חוזרת למקום
+  // פתרון הגלילה החכם - ללא תקיעות
+  const ratingArea = document.getElementById('ratingArea');
+  const inputElements = [document.getElementById('carComment'), document.getElementById('reviewerName')];
+
+  inputElements.forEach(el => {
+      el.addEventListener('focus', () => {
+          // גלילה חלקה של אזור הכתיבה למרכז המסך
           setTimeout(() => {
-              if(!document.activeElement.tagName.match(/INPUT|TEXTAREA/)) {
-                  document.body.classList.remove('keyboard-open');
-              }
-          }, 100);
+              ratingArea.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }, 300);
       });
   });
 
@@ -197,8 +180,7 @@
     document.getElementById('reviewerName').value = "";
     selectedRating = 0;
     stars.forEach(s => s.classList.remove('active'));
-    document.body.classList.remove('keyboard-open');
-    document.activeElement.blur();
+    document.activeElement.blur(); // סגירת מקלדת
   };
 
   window.deleteReview = (id) => { if (confirm("למחוק?")) remove(ref(db, 'reviews/' + id)); };
