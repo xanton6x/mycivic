@@ -21,7 +21,7 @@
             background: var(--bg-color); color: var(--text-color);
             margin: 0; padding: 10px; transition: 0.3s;
             display: flex; flex-direction: column; align-items: center;
-            padding-bottom: 80px; /* מקום לכפתור של טלגרם */
+            padding-bottom: 80px; 
         }
 
         .container { 
@@ -46,7 +46,6 @@
         @keyframes pop { 0% { transform: scale(1); } 50% { transform: scale(1.4); } 100% { transform: scale(1); } }
 
         .rating-input { background: var(--card-bg); padding: 10px; border-radius: 15px; }
-        
         #welcomeMsg { text-align: center; font-weight: bold; margin-bottom: 10px; color: var(--primary); }
 
         textarea { 
@@ -60,8 +59,10 @@
 
         #reviews { width: 100%; max-width: 500px; margin-top: 25px; text-align: right; }
         .review-card { background: var(--card-bg); padding: 15px; border-radius: 15px; margin-bottom: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .review-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
+        .review-time { font-size: 0.75rem; color: var(--sub-text); }
         .stars-display { color: var(--star-active); }
-        .del-btn { background: #ff4d4d; color: white; border: none; padding: 5px 10px; border-radius: 8px; cursor: pointer; float: left; }
+        .del-btn { background: #ff4d4d; color: white; border: none; padding: 5px 10px; border-radius: 8px; cursor: pointer; float: left; margin-top: 10px; }
     </style>
 </head>
 <body>
@@ -82,7 +83,7 @@
     </div>
 
     <div class="rating-input" id="ratingArea">
-        <div id="welcomeMsg">היי, אורח!</div>
+        <div id="welcomeMsg">טוען...</div>
         <div class="star-rating" id="starInput">
             <span data-v="1">★</span><span data-v="2">★</span><span data-v="3">★</span><span data-v="4">★</span><span data-v="5">★</span>
         </div>
@@ -112,45 +113,31 @@
 
   let isAdmin = false, selectedRating = 0, currentData = null;
 
-  // --- Telegram Mini App Logic ---
+  // Telegram Setup
   const tg = window.Telegram.WebApp;
   tg.expand();
 
-  // 1. זיהוי שם אוטומטי
   const user = tg.initDataUnsafe?.user;
   const userName = user ? `${user.first_name} ${user.last_name || ""}` : "אורח";
   document.getElementById('welcomeMsg').innerText = `היי ${userName}, דרג את ה-Civic:`;
 
-  // 2. הגדרת הכפתור הראשי של טלגרם
   tg.MainButton.setText("פרסם חוות דעת 🚗");
-  tg.MainButton.offClick(submitReview); // ניקוי אירועים קודמים
   tg.MainButton.onClick(submitReview);
   tg.MainButton.show();
 
-  // התאמת צבעים אוטומטית לטלגרם
-  if (tg.colorScheme === 'dark') {
-      document.documentElement.setAttribute("data-theme", "dark");
+  // פונקציית זמן שעבר
+  function timeAgo(ts) {
+    if (!ts) return "";
+    const diff = Date.now() - ts;
+    const mins = Math.floor(diff / 60000);
+    if (mins < 1) return "עכשיו";
+    if (mins < 60) return `לפני ${mins} דק'`;
+    if (mins < 1440) return `לפני ${Math.floor(mins/60)} שע'`;
+    return `לפני ${Math.floor(mins/1440)} ימים`;
   }
-
-  // גלילה חכמה למקלדת
-  document.getElementById('carComment').addEventListener('focus', () => {
-      setTimeout(() => {
-          document.getElementById('ratingArea').scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }, 300);
-  });
-
-  const stars = document.querySelectorAll('#starInput span');
-  stars.forEach((star, index) => {
-    star.addEventListener('click', () => {
-      selectedRating = index + 1;
-      stars.forEach((s, i) => s.classList.toggle('active', i <= index));
-      tg.HapticFeedback.impactOccurred('light'); // רטט קל בבחירת כוכב
-    });
-  });
 
   async function submitReview() {
     const comment = document.getElementById('carComment').value;
-    
     if (!selectedRating || !comment.trim()) {
         tg.showAlert("חובה לבחור דירוג ולכתוב תגובה!");
         return;
@@ -174,12 +161,10 @@
 
         tg.HapticFeedback.notificationOccurred('success');
         tg.showAlert("תודה! התגובה פורסמה", () => {
-            // איפוס
             document.getElementById('carComment').value = "";
             selectedRating = 0;
             stars.forEach(s => s.classList.remove('active'));
             tg.MainButton.hideProgress();
-            document.activeElement.blur();
         });
         
     } catch (e) {
@@ -188,12 +173,14 @@
     }
   }
 
-  // שאר הפונקציות
-  window.deleteReview = (id) => { 
-      tg.showConfirm("למחוק את התגובה?", (confirmed) => {
-          if (confirmed) remove(ref(db, 'reviews/' + id));
-      });
-  };
+  const stars = document.querySelectorAll('#starInput span');
+  stars.forEach((star, index) => {
+    star.addEventListener('click', () => {
+      selectedRating = index + 1;
+      stars.forEach((s, i) => s.classList.toggle('active', i <= index));
+      tg.HapticFeedback.impactOccurred('light');
+    });
+  });
 
   onValue(reviewsRef, (s) => { currentData = s.val(); renderReviews(currentData); });
   onValue(ref(db, 'config/carImageUrl'), (s) => { if (s.val()) document.getElementById('carImage').src = s.val(); });
@@ -205,12 +192,16 @@
     let sum = 0, count = 0;
     Object.keys(data).reverse().forEach(id => {
       const r = data[id]; sum += r.rating; count++;
-      div.innerHTML += `<div class="review-card">
-        <div style="display:flex; justify-content:space-between"><strong>${r.name}</strong></div>
-        <div class="stars-display">${"★".repeat(r.rating)}</div>
-        <p>${r.comment}</p>
-        ${isAdmin ? `<button class="del-btn" onclick="deleteReview('${id}')">מחק</button>` : ''}
-      </div>`;
+      div.innerHTML += `
+        <div class="review-card">
+          <div class="review-header">
+            <strong>${r.name}</strong>
+            <span class="review-time">${timeAgo(r.timestamp)}</span>
+          </div>
+          <div class="stars-display">${"★".repeat(r.rating)}</div>
+          <p>${r.comment}</p>
+          ${isAdmin ? `<button class="del-btn" onclick="deleteReview('${id}')">מחק</button>` : ''}
+        </div>`;
     });
     const avg = count ? (sum / count).toFixed(1) : "0.0";
     document.getElementById('avgScore').innerText = avg;
@@ -223,11 +214,15 @@
     if (u === "admin" && p === "1234") { isAdmin = true; document.getElementById('changePicBtn').style.display = 'flex'; renderReviews(currentData); }
   };
 
+  window.deleteReview = (id) => { 
+      tg.showConfirm("למחוק את התגובה?", (confirmed) => {
+          if (confirmed) remove(ref(db, 'reviews/' + id));
+      });
+  };
+
   window.toggleTheme = () => {
     const t = document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark";
     document.documentElement.setAttribute("data-theme", t);
-    localStorage.setItem("theme", t);
-    document.getElementById("themeBtn").innerText = t === "dark" ? "☀️" : "🌙";
   };
 </script>
 </body>
