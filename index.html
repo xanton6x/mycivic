@@ -3,75 +3,134 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>דירוג ה-Civic שלי</title>
+    <title>דרגו את ה-Civic שלי</title>
     <style>
         :root {
             --bg-color: #f0f2f5; --card-bg: #ffffff; --text-color: #1c1e21;
-            --sub-text: #65676b; --border-color: #ddd; --input-bg: #fff;
+            --sub-text: #65676b; --border-color: #ddd; --input-bg: #f5f6f7;
+            --star-color: #ccc; --star-active: #f39c12; --primary: #1877f2;
         }
         [data-theme="dark"] {
             --bg-color: #18191a; --card-bg: #242526; --text-color: #e4e6eb;
             --sub-text: #b0b3b8; --border-color: #3e4042; --input-bg: #3a3b3c;
         }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg-color); text-align: center; padding: 20px; color: var(--text-color); transition: 0.3s; }
-        .container { max-width: 600px; margin: auto; background: var(--card-bg); padding: 30px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); position: relative; }
-        
-        .profile-pic-container { position: relative; width: 150px; height: 150px; margin: 0 auto 20px; }
-        .car-pic { width: 150px; height: 150px; border-radius: 50%; object-fit: cover; border: 4px solid #1877f2; background: #eee; }
-        
-        .change-pic-btn { position: absolute; bottom: 5px; right: 5px; background: #42b72a; color: white; border: none; border-radius: 50%; width: 40px; height: 40px; cursor: pointer; display: none; font-size: 20px; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.3); }
 
-        .stats-box { background: var(--bg-color); padding: 15px; border-radius: 12px; margin-bottom: 20px; border: 1px solid var(--border-color); }
-        .average-score { font-size: 2.5rem; font-weight: bold; color: #f39c12; margin: 0; }
-        .rating-input { margin: 20px 0; background: var(--card-bg); padding: 15px; border-radius: 12px; border: 1px solid var(--border-color); }
-        input, select, textarea { width: 100%; padding: 12px; margin-top: 10px; border: 1px solid var(--border-color); border-radius: 8px; box-sizing: border-box; background: var(--input-bg); color: var(--text-color); font-size: 16px; }
-        button { background: #1877f2; color: white; border: none; padding: 12px 30px; border-radius: 8px; cursor: pointer; margin-top: 15px; font-weight: bold; width: 100%; }
-        
-        .theme-toggle, .admin-toggle { position: fixed; top: 20px; background: #1877f2; color: white; border: none; padding: 10px; border-radius: 50%; cursor: pointer; width: 45px; height: 45px; font-size: 20px; display: flex; align-items: center; justify-content: center; z-index: 1000; }
-        .theme-toggle { left: 20px; }
-        .admin-toggle { left: 75px; background: #42b72a; }
-        
-        #reviews { margin-top: 30px; text-align: right; }
-        .review-card { border-bottom: 1px solid var(--border-color); padding: 15px 0; position: relative; }
-        .stars { color: #f39c12; }
-        .del-btn { background: #ff4d4d; color: white; border: none; padding: 5px 10px; border-radius: 6px; cursor: pointer; float: left; font-size: 12px; font-weight: bold; }
-        
-        .time-ago { font-size: 0.75rem; color: var(--sub-text); margin-right: 10px; }
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background: var(--bg-color); color: var(--text-color);
+            margin: 0; padding: 10px; transition: 0.3s;
+            display: flex; justify-content: center;
+        }
+
+        .container { 
+            width: 100%; max-width: 500px; 
+            background: var(--card-bg); padding: 20px; 
+            border-radius: 25px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); 
+            margin-top: 50px; position: relative;
+        }
+
+        /* תמונת פרופיל אדפטיבית */
+        .profile-container { position: relative; width: 120px; height: 120px; margin: -60px auto 15px; }
+        .car-pic { 
+            width: 100%; height: 100%; border-radius: 50%; 
+            object-fit: cover; border: 5px solid var(--card-bg);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2); background: #eee;
+        }
+        .change-pic-btn { 
+            position: absolute; bottom: 5px; right: 5px; 
+            background: #42b72a; color: white; border: none; 
+            border-radius: 50%; width: 35px; height: 35px; 
+            cursor: pointer; display: none; align-items: center; justify-content: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2); font-size: 18px;
+        }
+
+        .stats-box { margin-bottom: 20px; }
+        .average-score { font-size: 3rem; font-weight: 800; color: var(--star-active); margin: 0; }
+        .total-count { font-size: 0.9rem; color: var(--sub-text); }
+
+        /* אנימציית כוכבים */
+        .star-rating { 
+            display: flex; justify-content: center; gap: 8px; 
+            margin: 15px 0; font-size: 35px; direction: ltr; 
+        }
+        .star-rating span { 
+            color: var(--star-color); cursor: pointer; transition: transform 0.2s, color 0.2s; 
+        }
+        .star-rating span:hover { transform: scale(1.2); }
+        .star-rating span.active { color: var(--star-active); animation: pop 0.3s ease-out; }
+
+        @keyframes pop {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.4); }
+            100% { transform: scale(1); }
+        }
+
+        .input-group { text-align: right; margin-bottom: 15px; }
+        input, textarea { 
+            width: 100%; padding: 12px; border-radius: 12px; 
+            border: 1px solid var(--border-color); background: var(--input-bg);
+            color: var(--text-color); box-sizing: border-box; font-size: 16px; outline: none;
+        }
+        button.submit-btn { 
+            background: var(--primary); color: white; border: none; 
+            padding: 15px; border-radius: 12px; width: 100%; 
+            font-weight: bold; font-size: 16px; cursor: pointer; transition: 0.2s;
+        }
+        button.submit-btn:active { transform: scale(0.95); }
+
+        .theme-toggle, .admin-toggle { 
+            position: absolute; top: -40px; background: var(--card-bg); 
+            border: none; width: 40px; height: 40px; border-radius: 50%; 
+            cursor: pointer; box-shadow: 0 2px 10px rgba(0,0,0,0.1); font-size: 18px;
+        }
+        .theme-toggle { left: 0; }
+        .admin-toggle { left: 50px; }
+
+        #reviews { margin-top: 25px; text-align: right; }
+        .review-card { 
+            background: var(--input-bg); padding: 15px; 
+            border-radius: 15px; margin-bottom: 10px; position: relative; 
+        }
+        .review-header { display: flex; justify-content: space-between; align-items: center; }
+        .reviewer-name { font-weight: bold; font-size: 1.05rem; }
+        .time-ago { font-size: 0.75rem; color: var(--sub-text); }
+        .stars-display { color: var(--star-active); font-size: 14px; margin-top: 4px; }
+        .del-btn { background: #ff4d4d; color: white; border: none; padding: 5px 10px; border-radius: 8px; cursor: pointer; font-size: 11px; }
+
+        @media (max-width: 400px) {
+            .container { margin-top: 70px; padding: 15px; }
+            .average-score { font-size: 2.5rem; }
+        }
     </style>
 </head>
 <body>
 
-<button class="theme-toggle" onclick="toggleTheme()" id="themeBtn">🌙</button>
-<button class="admin-toggle" onclick="adminLogin()">🔑</button>
-
 <div class="container">
-    <h1>דירוג ה-Civic שלי</h1>
-    
-    <div class="profile-pic-container">
-        <img id="carImage" src="https://via.placeholder.com/150?text=Car" class="car-pic" alt="My Car">
+    <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn">🌙</button>
+    <button class="admin-toggle" onclick="adminLogin()">🔑</button>
+
+    <div class="profile-container">
+        <img id="carImage" src="https://via.placeholder.com/150?text=Civic" class="car-pic">
         <button id="changePicBtn" class="change-pic-btn" onclick="changeCarImage()">📷</button>
     </div>
 
     <div class="stats-box">
         <p class="average-score" id="avgScore">0.0</p>
-        <div id="avgStars" class="stars"></div>
-        <p id="totalReviews" style="font-size: 0.9rem; color: var(--sub-text);">טוען נתונים...</p>
+        <div id="avgStars" class="stars-display" style="font-size: 20px;"></div>
+        <p class="total-count" id="totalReviews">טוען...</p>
     </div>
 
     <div class="rating-input">
-        <input type="text" id="reviewerName" placeholder="השם שלכם">
-        <select id="carRating">
-            <option value="5">⭐⭐⭐⭐⭐ (מעולה)</option>
-            <option value="4">⭐⭐⭐⭐ (טוב מאד)</option>
-            <option value="3">⭐⭐⭐ (נחמד)</option>
-            <option value="2">⭐⭐ (טעון שיפור)</option>
-            <option value="1">⭐ (לא אהבתי)</option>
-        </select>
-        <textarea id="carComment" placeholder="כתבו חוות דעת..."></textarea>
-        <button onclick="submitReview()">שלח דירוג</button>
+        <input type="text" id="reviewerName" placeholder="איך קוראים לך?">
+        
+        <div class="star-rating" id="starInput">
+            <span data-v="1">★</span><span data-v="2">★</span><span data-v="3">★</span><span data-v="4">★</span><span data-v="5">★</span>
+        </div>
+        
+        <textarea id="carComment" rows="3" placeholder="מה חשבת על הרכב?"></textarea>
+        <button class="submit-btn" onclick="submitReview()">פרסם חוות דעת</button>
     </div>
 
-    <hr>
     <div id="reviews"></div>
 </div>
 
@@ -94,121 +153,375 @@
   const reviewsRef = ref(db, 'reviews');
 
   let isAdmin = false;
-  let currentReviewsData = null;
+  let selectedRating = 0;
+  let currentData = null;
 
-  // פונקציה לחישוב זמן יחסי בעברית
-  function timeAgo(timestamp) {
-    const now = Date.now();
-    const diff = now - timestamp;
-    const seconds = Math.floor(diff / 1000);
-    const minutes = Math.floor(seconds / 60);
-    const hours = Math.floor(minutes / 60);
-    const days = Math.floor(hours / 24);
+  // כוכבים אינטראקטיביים
+  const stars = document.querySelectorAll('#starInput span');
+  stars.forEach((star, index) => {
+    star.addEventListener('click', () => {
+      selectedRating = index + 1;
+      stars.forEach((s, i) => s.classList.toggle('active', i <= index));
+    });
+  });
 
-    if (seconds < 60) return "ממש עכשיו";
-    if (minutes < 60) return `לפני ${minutes} דקות`;
-    if (hours < 24) return `לפני ${hours} שעות`;
-    if (days === 1) return "אתמול";
-    if (days < 7) return `לפני ${days} ימים`;
-    return new Date(timestamp).toLocaleDateString('he-IL');
+  function timeAgo(ts) {
+    const diff = Date.now() - ts;
+    const mins = Math.floor(diff / 60000);
+    const hrs = Math.floor(mins / 60);
+    const days = Math.floor(hrs / 24);
+    if (mins < 1) return "ממש עכשיו";
+    if (mins < 60) return `לפני ${mins} דק'`;
+    if (hrs < 24) return `לפני ${hrs} שע'`;
+    return `לפני ${days} ימים`;
   }
 
-  onValue(ref(db, 'config/carImageUrl'), (snapshot) => {
-      const url = snapshot.val();
-      if (url) document.getElementById('carImage').src = url;
+  onValue(ref(db, 'config/carImageUrl'), (s) => {
+    if (s.val()) document.getElementById('carImage').src = s.val();
   });
 
   window.adminLogin = () => {
-      const user = prompt("שם משתמש:");
-      const pass = prompt("סיסמה:");
-      if (user === "admin" && pass === "1234") {
-          isAdmin = true;
-          document.getElementById('changePicBtn').style.display = 'flex';
-          alert("מחובר כמנהל!");
-          renderReviews(currentReviewsData);
-      } else {
-          alert("פרטים שגויים");
-      }
+    const u = prompt("משתמש:"), p = prompt("סיסמה:");
+    if (u === "admin" && p === "1234") {
+      isAdmin = true;
+      document.getElementById('changePicBtn').style.display = 'flex';
+      alert("שלום אדוני המנהל!");
+      renderReviews(currentData);
+    }
   };
 
   window.changeCarImage = () => {
-      let url = prompt("הדבק כאן את קישור השיתוף מ-Google Drive:");
-      if (url) {
-          if (url.includes("drive.google.com")) {
-              try {
-                  const fileId = url.split('/d/')[1].split('/')[0];
-                  url = `https://lh3.googleusercontent.com/u/0/d/${fileId}`;
-              } catch (e) { alert("לינק לא תקין"); return; }
-          }
-          set(ref(db, 'config/carImageUrl'), url).then(() => alert("עודכן!"));
-      }
+    let url = prompt("קישור שיתוף תמונה מ-Google Drive:");
+    if (url && url.includes("drive.google.com")) {
+      const id = url.split('/d/')[1].split('/')[0];
+      url = `https://lh3.googleusercontent.com/u/0/d/${id}`;
+      set(ref(db, 'config/carImageUrl'), url);
+    }
   };
 
   window.submitReview = () => {
     const name = document.getElementById('reviewerName').value || "אורח";
-    const rating = document.getElementById('carRating').value;
     const comment = document.getElementById('carComment').value;
-    if (!comment.trim()) return alert("כתבו חוות דעת");
-    push(reviewsRef, { name, rating: parseInt(rating), comment, timestamp: Date.now() });
+    if (!selectedRating) return alert("דרגו בכוכבים!");
+    if (!comment.trim()) return alert("כתבו משהו...");
+    
+    push(reviewsRef, { name, rating: selectedRating, comment, timestamp: Date.now() });
     document.getElementById('carComment').value = "";
     document.getElementById('reviewerName').value = "";
+    selectedRating = 0;
+    stars.forEach(s => s.classList.remove('active'));
   };
 
-  window.deleteReview = (id) => {
-      if (confirm("למחוק את התגובה?")) remove(ref(db, 'reviews/' + id));
-  };
+  window.deleteReview = (id) => { if (confirm("למחוק?")) remove(ref(db, 'reviews/' + id)); };
 
-  onValue(reviewsRef, (snapshot) => {
-    currentReviewsData = snapshot.val();
-    renderReviews(currentReviewsData);
+  onValue(reviewsRef, (s) => {
+    currentData = s.val();
+    renderReviews(currentData);
   });
 
   function renderReviews(data) {
-    const reviewsDiv = document.getElementById('reviews');
-    reviewsDiv.innerHTML = "<h3>חוות דעת מהגולשים:</h3>";
-    
-    if (!data) {
-        document.getElementById('totalReviews').innerText = "אין דירוגים עדיין";
+    const div = document.getElementById('reviews');
+    div.innerHTML = "";
+    if (!data) { 
+        document.getElementById('totalReviews').innerText = "אין דירוגים";
         document.getElementById('avgScore').innerText = "0.0";
-        document.getElementById('avgStars').innerHTML = "";
-        return;
+        return; 
     }
 
-    let totalScore = 0, count = 0;
-    const sortedKeys = Object.keys(data).reverse();
-
-    sortedKeys.forEach(id => {
+    let sum = 0, count = 0;
+    Object.keys(data).reverse().forEach(id => {
       const r = data[id];
-      totalScore += r.rating;
-      count++;
-      
-      reviewsDiv.innerHTML += `
+      sum += r.rating; count++;
+      div.innerHTML += `
         <div class="review-card">
-            ${isAdmin ? `<button class="del-btn" onclick="deleteReview('${id}')">מחק 🗑️</button>` : ''}
-            <strong>${r.name}</strong>
+          <div class="review-header">
+            <span class="reviewer-name">${r.name}</span>
             <span class="time-ago">${timeAgo(r.timestamp)}</span>
-            <div class="stars">${"⭐".repeat(r.rating)}</div>
-            <p>${r.comment}</p>
+          </div>
+          <div class="stars-display">${"★".repeat(r.rating)}</div>
+          <p style="margin:8px 0 0; font-size:15px;">${r.comment}</p>
+          ${isAdmin ? `<button class="del-btn" style="margin-top:10px" onclick="deleteReview('${id}')">מחק 🗑️</button>` : ''}
         </div>`;
     });
-
-    const avg = (totalScore / count).toFixed(1);
+    const avg = (sum / count).toFixed(1);
     document.getElementById('avgScore').innerText = avg;
-    document.getElementById('avgStars').innerHTML = "⭐".repeat(Math.round(avg));
-    document.getElementById('totalReviews').innerText = `מבוסס על ${count} דירוגים`;
+    document.getElementById('avgStars').innerHTML = "★".repeat(Math.round(avg));
+    document.getElementById('totalReviews').innerText = `מבוסס על ${count} חוות דעת`;
   }
 
   window.toggleTheme = () => {
-      const target = document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark";
-      document.documentElement.setAttribute("data-theme", target);
-      localStorage.setItem("theme", target);
-      document.getElementById("themeBtn").innerText = target === "dark" ? "☀️" : "🌙";
+    const t = document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark";
+    document.documentElement.setAttribute("data-theme", t);
+    localStorage.setItem("theme", t);
+    document.getElementById("themeBtn").innerText = t === "dark" ? "☀️" : "🌙";
   };
   if (localStorage.getItem("theme") === "dark") {
-      document.documentElement.setAttribute("data-theme", "dark");
-      document.getElementById("themeBtn").innerText = "☀️";
+    document.documentElement.setAttribute("data-theme", "dark");
+    document.getElementById("themeBtn").innerText = "☀️";
   }
 </script>
+</body>
+</html><!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>דרגו את ה-Civic שלי</title>
+    <style>
+        :root {
+            --bg-color: #f0f2f5; --card-bg: #ffffff; --text-color: #1c1e21;
+            --sub-text: #65676b; --border-color: #ddd; --input-bg: #f5f6f7;
+            --star-color: #ccc; --star-active: #f39c12; --primary: #1877f2;
+        }
+        [data-theme="dark"] {
+            --bg-color: #18191a; --card-bg: #242526; --text-color: #e4e6eb;
+            --sub-text: #b0b3b8; --border-color: #3e4042; --input-bg: #3a3b3c;
+        }
 
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background: var(--bg-color); color: var(--text-color);
+            margin: 0; padding: 10px; transition: 0.3s;
+            display: flex; justify-content: center;
+        }
+
+        .container { 
+            width: 100%; max-width: 500px; 
+            background: var(--card-bg); padding: 20px; 
+            border-radius: 25px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); 
+            margin-top: 50px; position: relative;
+        }
+
+        /* תמונת פרופיל אדפטיבית */
+        .profile-container { position: relative; width: 120px; height: 120px; margin: -60px auto 15px; }
+        .car-pic { 
+            width: 100%; height: 100%; border-radius: 50%; 
+            object-fit: cover; border: 5px solid var(--card-bg);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2); background: #eee;
+        }
+        .change-pic-btn { 
+            position: absolute; bottom: 5px; right: 5px; 
+            background: #42b72a; color: white; border: none; 
+            border-radius: 50%; width: 35px; height: 35px; 
+            cursor: pointer; display: none; align-items: center; justify-content: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2); font-size: 18px;
+        }
+
+        .stats-box { margin-bottom: 20px; }
+        .average-score { font-size: 3rem; font-weight: 800; color: var(--star-active); margin: 0; }
+        .total-count { font-size: 0.9rem; color: var(--sub-text); }
+
+        /* אנימציית כוכבים */
+        .star-rating { 
+            display: flex; justify-content: center; gap: 8px; 
+            margin: 15px 0; font-size: 35px; direction: ltr; 
+        }
+        .star-rating span { 
+            color: var(--star-color); cursor: pointer; transition: transform 0.2s, color 0.2s; 
+        }
+        .star-rating span:hover { transform: scale(1.2); }
+        .star-rating span.active { color: var(--star-active); animation: pop 0.3s ease-out; }
+
+        @keyframes pop {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.4); }
+            100% { transform: scale(1); }
+        }
+
+        .input-group { text-align: right; margin-bottom: 15px; }
+        input, textarea { 
+            width: 100%; padding: 12px; border-radius: 12px; 
+            border: 1px solid var(--border-color); background: var(--input-bg);
+            color: var(--text-color); box-sizing: border-box; font-size: 16px; outline: none;
+        }
+        button.submit-btn { 
+            background: var(--primary); color: white; border: none; 
+            padding: 15px; border-radius: 12px; width: 100%; 
+            font-weight: bold; font-size: 16px; cursor: pointer; transition: 0.2s;
+        }
+        button.submit-btn:active { transform: scale(0.95); }
+
+        .theme-toggle, .admin-toggle { 
+            position: absolute; top: -40px; background: var(--card-bg); 
+            border: none; width: 40px; height: 40px; border-radius: 50%; 
+            cursor: pointer; box-shadow: 0 2px 10px rgba(0,0,0,0.1); font-size: 18px;
+        }
+        .theme-toggle { left: 0; }
+        .admin-toggle { left: 50px; }
+
+        #reviews { margin-top: 25px; text-align: right; }
+        .review-card { 
+            background: var(--input-bg); padding: 15px; 
+            border-radius: 15px; margin-bottom: 10px; position: relative; 
+        }
+        .review-header { display: flex; justify-content: space-between; align-items: center; }
+        .reviewer-name { font-weight: bold; font-size: 1.05rem; }
+        .time-ago { font-size: 0.75rem; color: var(--sub-text); }
+        .stars-display { color: var(--star-active); font-size: 14px; margin-top: 4px; }
+        .del-btn { background: #ff4d4d; color: white; border: none; padding: 5px 10px; border-radius: 8px; cursor: pointer; font-size: 11px; }
+
+        @media (max-width: 400px) {
+            .container { margin-top: 70px; padding: 15px; }
+            .average-score { font-size: 2.5rem; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn">🌙</button>
+    <button class="admin-toggle" onclick="adminLogin()">🔑</button>
+
+    <div class="profile-container">
+        <img id="carImage" src="https://via.placeholder.com/150?text=Civic" class="car-pic">
+        <button id="changePicBtn" class="change-pic-btn" onclick="changeCarImage()">📷</button>
+    </div>
+
+    <div class="stats-box">
+        <p class="average-score" id="avgScore">0.0</p>
+        <div id="avgStars" class="stars-display" style="font-size: 20px;"></div>
+        <p class="total-count" id="totalReviews">טוען...</p>
+    </div>
+
+    <div class="rating-input">
+        <input type="text" id="reviewerName" placeholder="איך קוראים לך?">
+        
+        <div class="star-rating" id="starInput">
+            <span data-v="1">★</span><span data-v="2">★</span><span data-v="3">★</span><span data-v="4">★</span><span data-v="5">★</span>
+        </div>
+        
+        <textarea id="carComment" rows="3" placeholder="מה חשבת על הרכב?"></textarea>
+        <button class="submit-btn" onclick="submitReview()">פרסם חוות דעת</button>
+    </div>
+
+    <div id="reviews"></div>
+</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+  import { getDatabase, ref, push, onValue, remove, set } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyCiBOPWWSgKlz0IHVvTt4jktfHLI1hsYQc",
+    authDomain: "mycivic-11af8.firebaseapp.com",
+    databaseURL: "https://mycivic-11af8-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "mycivic-11af8",
+    storageBucket: "mycivic-11af8.appspot.com", 
+    messagingSenderId: "428340353040",
+    appId: "1:428340353040:web:f6f9f9ce2c83c8ed195295"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getDatabase(app);
+  const reviewsRef = ref(db, 'reviews');
+
+  let isAdmin = false;
+  let selectedRating = 0;
+  let currentData = null;
+
+  // כוכבים אינטראקטיביים
+  const stars = document.querySelectorAll('#starInput span');
+  stars.forEach((star, index) => {
+    star.addEventListener('click', () => {
+      selectedRating = index + 1;
+      stars.forEach((s, i) => s.classList.toggle('active', i <= index));
+    });
+  });
+
+  function timeAgo(ts) {
+    const diff = Date.now() - ts;
+    const mins = Math.floor(diff / 60000);
+    const hrs = Math.floor(mins / 60);
+    const days = Math.floor(hrs / 24);
+    if (mins < 1) return "ממש עכשיו";
+    if (mins < 60) return `לפני ${mins} דק'`;
+    if (hrs < 24) return `לפני ${hrs} שע'`;
+    return `לפני ${days} ימים`;
+  }
+
+  onValue(ref(db, 'config/carImageUrl'), (s) => {
+    if (s.val()) document.getElementById('carImage').src = s.val();
+  });
+
+  window.adminLogin = () => {
+    const u = prompt("משתמש:"), p = prompt("סיסמה:");
+    if (u === "admin" && p === "1234") {
+      isAdmin = true;
+      document.getElementById('changePicBtn').style.display = 'flex';
+      alert("שלום אדוני המנהל!");
+      renderReviews(currentData);
+    }
+  };
+
+  window.changeCarImage = () => {
+    let url = prompt("קישור שיתוף תמונה מ-Google Drive:");
+    if (url && url.includes("drive.google.com")) {
+      const id = url.split('/d/')[1].split('/')[0];
+      url = `https://lh3.googleusercontent.com/u/0/d/${id}`;
+      set(ref(db, 'config/carImageUrl'), url);
+    }
+  };
+
+  window.submitReview = () => {
+    const name = document.getElementById('reviewerName').value || "אורח";
+    const comment = document.getElementById('carComment').value;
+    if (!selectedRating) return alert("דרגו בכוכבים!");
+    if (!comment.trim()) return alert("כתבו משהו...");
+    
+    push(reviewsRef, { name, rating: selectedRating, comment, timestamp: Date.now() });
+    document.getElementById('carComment').value = "";
+    document.getElementById('reviewerName').value = "";
+    selectedRating = 0;
+    stars.forEach(s => s.classList.remove('active'));
+  };
+
+  window.deleteReview = (id) => { if (confirm("למחוק?")) remove(ref(db, 'reviews/' + id)); };
+
+  onValue(reviewsRef, (s) => {
+    currentData = s.val();
+    renderReviews(currentData);
+  });
+
+  function renderReviews(data) {
+    const div = document.getElementById('reviews');
+    div.innerHTML = "";
+    if (!data) { 
+        document.getElementById('totalReviews').innerText = "אין דירוגים";
+        document.getElementById('avgScore').innerText = "0.0";
+        return; 
+    }
+
+    let sum = 0, count = 0;
+    Object.keys(data).reverse().forEach(id => {
+      const r = data[id];
+      sum += r.rating; count++;
+      div.innerHTML += `
+        <div class="review-card">
+          <div class="review-header">
+            <span class="reviewer-name">${r.name}</span>
+            <span class="time-ago">${timeAgo(r.timestamp)}</span>
+          </div>
+          <div class="stars-display">${"★".repeat(r.rating)}</div>
+          <p style="margin:8px 0 0; font-size:15px;">${r.comment}</p>
+          ${isAdmin ? `<button class="del-btn" style="margin-top:10px" onclick="deleteReview('${id}')">מחק 🗑️</button>` : ''}
+        </div>`;
+    });
+    const avg = (sum / count).toFixed(1);
+    document.getElementById('avgScore').innerText = avg;
+    document.getElementById('avgStars').innerHTML = "★".repeat(Math.round(avg));
+    document.getElementById('totalReviews').innerText = `מבוסס על ${count} חוות דעת`;
+  }
+
+  window.toggleTheme = () => {
+    const t = document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark";
+    document.documentElement.setAttribute("data-theme", t);
+    localStorage.setItem("theme", t);
+    document.getElementById("themeBtn").innerText = t === "dark" ? "☀️" : "🌙";
+  };
+  if (localStorage.getItem("theme") === "dark") {
+    document.documentElement.setAttribute("data-theme", "dark");
+    document.getElementById("themeBtn").innerText = "☀️";
+  }
+</script>
 </body>
 </html>
