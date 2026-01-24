@@ -16,28 +16,25 @@
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg-color); text-align: center; padding: 20px; color: var(--text-color); transition: 0.3s; }
         .container { max-width: 600px; margin: auto; background: var(--card-bg); padding: 30px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); position: relative; }
         
-        /* עיצוב תמונת פרופיל עגולה */
+        /* עיצוב תמונת פרופיל */
         .profile-pic-container { position: relative; width: 150px; height: 150px; margin: 0 auto 20px; }
-        .car-pic { width: 150px; height: 150px; border-radius: 50%; object-fit: cover; border: 4px solid #1877f2; background: #eee; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        .car-pic { width: 150px; height: 150px; border-radius: 50%; object-fit: cover; border: 4px solid #1877f2; background: #eee; }
         
-        #fileInput { display: none; }
         .change-pic-btn { position: absolute; bottom: 5px; right: 5px; background: #42b72a; color: white; border: none; border-radius: 50%; width: 40px; height: 40px; cursor: pointer; display: none; font-size: 20px; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.3); }
 
         .stats-box { background: var(--bg-color); padding: 15px; border-radius: 12px; margin-bottom: 20px; border: 1px solid var(--border-color); }
         .average-score { font-size: 2.5rem; font-weight: bold; color: #f39c12; margin: 0; }
         .rating-input { margin: 20px 0; background: var(--card-bg); padding: 15px; border-radius: 12px; border: 1px solid var(--border-color); }
         input, select, textarea { width: 100%; padding: 12px; margin-top: 10px; border: 1px solid var(--border-color); border-radius: 8px; box-sizing: border-box; background: var(--input-bg); color: var(--text-color); font-size: 16px; }
-        button { background: #1877f2; color: white; border: none; padding: 12px 30px; border-radius: 8px; cursor: pointer; margin-top: 15px; font-weight: bold; width: 100%; transition: 0.2s; }
-        button:active { transform: scale(0.98); }
+        button { background: #1877f2; color: white; border: none; padding: 12px 30px; border-radius: 8px; cursor: pointer; margin-top: 15px; font-weight: bold; width: 100%; }
         
-        .theme-toggle, .admin-toggle { position: fixed; top: 20px; background: #1877f2; color: white; border: none; padding: 10px; border-radius: 50%; cursor: pointer; width: 45px; height: 45px; font-size: 20px; display: flex; align-items: center; justify-content: center; z-index: 1000; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
+        .theme-toggle, .admin-toggle { position: fixed; top: 20px; background: #1877f2; color: white; border: none; padding: 10px; border-radius: 50%; cursor: pointer; width: 45px; height: 45px; font-size: 20px; display: flex; align-items: center; justify-content: center; z-index: 1000; }
         .theme-toggle { left: 20px; }
         .admin-toggle { left: 75px; background: #42b72a; }
         
         #reviews { margin-top: 30px; text-align: right; }
         .review-card { border-bottom: 1px solid var(--border-color); padding: 15px 0; position: relative; }
         .stars { color: #f39c12; }
-        .reviewer-name { font-weight: bold; display: block; }
         .del-btn { background: #ff4d4d; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; float: left; display: none; }
     </style>
 </head>
@@ -51,8 +48,7 @@
     
     <div class="profile-pic-container">
         <img id="carImage" src="https://via.placeholder.com/150?text=Car" class="car-pic" alt="My Car">
-        <label for="fileInput" id="changePicLabel" class="change-pic-btn">📷</label>
-        <input type="file" id="fileInput" accept="image/*" onchange="uploadImage(this)">
+        <button id="changePicBtn" class="change-pic-btn" onclick="changeCarImage()">📷</button>
     </div>
 
     <div class="stats-box">
@@ -81,7 +77,6 @@
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
   import { getDatabase, ref, push, onValue, remove, set } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
-  import { getStorage, ref as sRef, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyCiBOPWWSgKlz0IHVvTt4jktfHLI1hsYQc",
@@ -95,12 +90,11 @@
 
   const app = initializeApp(firebaseConfig);
   const db = getDatabase(app);
-  const storage = getStorage(app);
   const reviewsRef = ref(db, 'reviews');
 
   let isAdmin = false;
 
-  // טעינת תמונת הרכב מה-Database
+  // טעינת התמונה מה-Database
   onValue(ref(db, 'config/carImageUrl'), (snapshot) => {
       const url = snapshot.val();
       if (url) document.getElementById('carImage').src = url;
@@ -111,29 +105,31 @@
       const pass = prompt("סיסמה:");
       if (user === "admin" && pass === "1234") {
           isAdmin = true;
+          document.getElementById('changePicBtn').style.display = 'flex';
           alert("מחובר כמנהל!");
-          document.getElementById('changePicLabel').style.display = 'flex';
           renderReviews();
-      } else {
-          alert("פרטים שגויים");
       }
   };
 
-  // העלאת תמונה ל-Firebase Storage
-  window.uploadImage = async (input) => {
-      const file = input.files[0];
-      if (!file) return;
-
-      const storageRef = sRef(storage, 'car_main_image.jpg');
-      try {
-          alert("מעלה תמונה... אל תסגור את הדף");
-          const snapshot = await uploadBytes(storageRef, file);
-          const url = await getDownloadURL(snapshot.ref);
-          await set(ref(db, 'config/carImageUrl'), url);
-          alert("התמונה הוחלפה בהצלחה!");
-      } catch (e) {
-          console.error(e);
-          alert("שגיאה! וודא ש-Storage מופעל ב-Firebase.");
+  // פונקציית שינוי תמונה באמצעות קישור Google Drive
+  window.changeCarImage = () => {
+      let url = prompt("הדבק כאן את קישור השיתוף של התמונה מ-Google Drive:");
+      if (url) {
+          // המרה אוטומטית של לינק שיתוף של גוגל ללינק תמונה ישיר
+          if (url.includes("drive.google.com")) {
+              try {
+                  const parts = url.split('/');
+                  const fileId = parts[parts.indexOf('d') + 1];
+                  url = `https://lh3.googleusercontent.com/u/0/d/${fileId}`;
+              } catch (e) {
+                  alert("פורמט הלינק לא תקין, וודא שהעתקת לינק שיתוף מלא.");
+                  return;
+              }
+          }
+          
+          set(ref(db, 'config/carImageUrl'), url)
+          .then(() => alert("התמונה עודכנה! וודא שהגדרת 'כל מי שקיבל את הקישור' בדרייב."))
+          .catch(() => alert("שגיאה בעדכון"));
       }
   };
 
@@ -142,68 +138,45 @@
     const rating = document.getElementById('carRating').value;
     const comment = document.getElementById('carComment').value;
     if (!comment.trim()) return alert("כתבו חוות דעת");
-
-    push(reviewsRef, {
-      name,
-      rating: parseInt(rating),
-      comment,
-      timestamp: Date.now()
-    }).then(() => {
-        document.getElementById('carComment').value = "";
-        document.getElementById('reviewerName').value = "";
-    });
+    push(reviewsRef, { name, rating: parseInt(rating), comment, timestamp: Date.now() });
+    document.getElementById('carComment').value = "";
   };
 
   window.deleteReview = (id) => {
-      if (confirm("למחוק את התגובה?")) remove(ref(db, 'reviews/' + id));
+      if (confirm("למחוק?")) remove(ref(db, 'reviews/' + id));
   };
 
-  let currentData = {};
   onValue(reviewsRef, (snapshot) => {
-    currentData = snapshot.val();
-    renderReviews();
-  });
-
-  function renderReviews() {
+    const data = snapshot.val();
     const reviewsDiv = document.getElementById('reviews');
     reviewsDiv.innerHTML = "<h3>חוות דעת:</h3>";
-    if (!currentData) {
-        document.getElementById('totalReviews').innerText = "אין דירוגים עדיין";
-        return;
-    }
+    if (!data) return;
 
     let totalScore = 0, count = 0;
-    Object.keys(currentData).reverse().forEach(id => {
-      const r = currentData[id];
+    Object.keys(data).reverse().forEach(id => {
+      const r = data[id];
       totalScore += r.rating;
       count++;
-      const date = new Date(r.timestamp).toLocaleDateString('he-IL');
       reviewsDiv.innerHTML += `
         <div class="review-card">
             ${isAdmin ? `<button class="del-btn" style="display:block" onclick="deleteReview('${id}')">מחק</button>` : ''}
-            <span class="reviewer-name">${r.name}</span>
+            <strong>${r.name}</strong>
             <div class="stars">${"⭐".repeat(r.rating)}</div>
             <p>${r.comment}</p>
-            <small style="color:var(--sub-text)">${date}</small>
         </div>`;
     });
-
     const avg = (totalScore / count).toFixed(1);
     document.getElementById('avgScore').innerText = avg;
     document.getElementById('avgStars').innerHTML = "⭐".repeat(Math.round(avg));
     document.getElementById('totalReviews').innerText = `מבוסס על ${count} דירוגים`;
-  }
+  });
 
   window.toggleTheme = () => {
       const target = document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark";
       document.documentElement.setAttribute("data-theme", target);
       localStorage.setItem("theme", target);
-      document.getElementById("themeBtn").innerText = target === "dark" ? "☀️" : "🌙";
   };
-  if (localStorage.getItem("theme") === "dark") {
-      document.documentElement.setAttribute("data-theme", "dark");
-      document.getElementById("themeBtn").innerText = "☀️";
-  }
+  if (localStorage.getItem("theme") === "dark") document.documentElement.setAttribute("data-theme", "dark");
 </script>
 
 </body>
