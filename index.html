@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Civic Rating - Pro Edition</title>
+    <title>Civic Rating - Final Pro</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         :root {
@@ -20,13 +20,9 @@
         body { font-family: -apple-system, system-ui, sans-serif; background: var(--bg-color); color: var(--text-color); margin: 0; padding: 10px; display: flex; flex-direction: column; align-items: center; padding-bottom: 80px; -webkit-tap-highlight-color: transparent; }
         .container { width: 100%; max-width: 500px; background: var(--card-bg); padding: 20px; border-radius: 25px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); margin-top: 50px; position: relative; box-sizing: border-box; }
         
-        /* באנר קבוע */
-        .static-ad-banner { background: var(--input-bg); border-right: 4px solid var(--primary); padding: 12px; border-radius: 12px; margin: 15px 0; font-size: 0.85rem; cursor: pointer; display: none; transition: 0.2s; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        .static-ad-banner:active { opacity: 0.8; }
-
-        /* פופ-אפ */
+        .static-ad-banner { background: var(--input-bg); border-right: 4px solid var(--primary); padding: 12px; border-radius: 12px; margin: 15px 0; font-size: 0.85rem; cursor: pointer; display: none; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
         .ad-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); backdrop-filter: blur(8px); display: none; justify-content: center; align-items: center; z-index: 1000; }
-        .ad-modal { background: var(--card-bg); width: 85%; max-width: 320px; padding: 25px; border-radius: 20px; text-align: center; position: relative; box-shadow: 0 20px 40px rgba(0,0,0,0.4); }
+        .ad-modal { background: var(--card-bg); width: 85%; max-width: 320px; padding: 25px; border-radius: 20px; text-align: center; position: relative; }
         
         .profile-container { position: relative; width: 120px; height: 120px; margin: -60px auto 15px; }
         .car-pic { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; border: 5px solid var(--card-bg); }
@@ -38,13 +34,17 @@
         .dist-bar-fill { height: 100%; background: var(--star-active); width: 0%; transition: 0.5s; }
 
         .star-rating { display: flex; justify-content: center; gap: 8px; margin: 15px 0; font-size: 35px; direction: ltr; }
-        .star-rating span { color: var(--star-color); cursor: pointer; transition: 0.2s; }
+        .star-rating span { color: var(--star-color); cursor: pointer; }
         .star-rating span.active { color: var(--star-active); }
 
         .tags-container { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; justify-content: center; }
         .tag-chip { background: var(--input-bg); border: 1px solid var(--border-color); padding: 5px 12px; border-radius: 15px; font-size: 0.85rem; cursor: pointer; }
         
         textarea { width: 100%; padding: 12px; border-radius: 12px; border: 1px solid var(--border-color); background: var(--input-bg); color: var(--text-color); box-sizing: border-box; font-size: 16px; outline: none; resize: none; }
+
+        /* עיצוב למצב נעול */
+        #inputArea.locked { opacity: 0.4; pointer-events: none; filter: grayscale(1); }
+        #lockMsgLabel { display: none; text-align: center; color: #ff4d4d; font-weight: bold; margin-bottom: 10px; font-size: 0.9rem; }
 
         .review-card { background: var(--card-bg); padding: 15px; border-radius: 18px; margin-bottom: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); position: relative; }
         .review-card.pinned { border: 2px solid gold; }
@@ -62,8 +62,8 @@
 
 <div id="adOverlay" class="ad-overlay">
     <div class="ad-modal">
-        <button onclick="closeAd()" style="position:absolute; top:10px; left:10px; border:none; background:none; font-size:20px; color:var(--sub-text);">✕</button>
-        <h2 style="color:var(--primary);">📢 מבצע / עדכון</h2>
+        <button onclick="closeAd()" style="position:absolute; top:10px; left:10px; border:none; background:none; font-size:20px;">✕</button>
+        <h2 style="color:var(--primary);">📢 הודעה חשובה</h2>
         <p id="adTextBody"></p>
         <button onclick="openAdLink()" style="background:var(--primary); color:white; border:none; padding:12px; width:100%; border-radius:12px; font-weight:bold;">לפרטים נוספים</button>
     </div>
@@ -92,6 +92,7 @@
 
     <div id="staticAd" class="static-ad-banner" onclick="openAdLink()"></div>
 
+    <div id="lockMsgLabel">🔒 האפשרות להגיב סגורה כרגע</div>
     <div id="inputArea">
         <div id="welcomeMsg" style="text-align:center; font-weight:bold; margin-bottom:5px; font-size: 0.9rem;"></div>
         <div class="star-rating" id="starInput">
@@ -121,24 +122,24 @@
     const tg = window.Telegram.WebApp;
     tg.ready(); tg.expand();
 
-    let isAdmin = false, selectedRating = 0, isLocked = false, adLink = "", hasShownAd = false, currentReviewsData = null;
+    let isAdmin = false, selectedRating = 0, isLocked = false, adLink = "", hasShownAd = false;
     const user = tg.initDataUnsafe?.user;
     const userName = user ? `${user.first_name} ${user.last_name || ""}` : "אורח";
-    const userPhoto = user?.photo_url || null;
 
-    document.getElementById('welcomeMsg').innerText = `היי ${userName}, דרג אותי:`;
-
-    onValue(ref(db, 'reviews'), (s) => { currentReviewsData = s.val(); renderReviews(currentReviewsData); });
+    onValue(ref(db, 'reviews'), (s) => renderReviews(s.val()));
     onValue(ref(db, 'config'), (s) => {
         const conf = s.val() || {};
         if (conf.carImageUrl) document.getElementById('carImage').src = conf.carImageUrl;
+        
+        // תיקון נעילה בזמן אמת
         isLocked = conf.isLocked || false;
+        applyLockState();
+
         renderTags(conf.tags || ['🚀 מטוס!', '🔥 הצגה', '🔊 סאונד', '💎 שמורה']);
         
-        // עדכון פרסומת
         if(conf.adText) {
             document.getElementById('adTextBody').innerText = conf.adText;
-            document.getElementById('staticAd').innerHTML = `<b>📢 הודעה:</b> ${conf.adText}`;
+            document.getElementById('staticAd').innerHTML = `<b>📢 פרסום:</b> ${conf.adText}`;
             document.getElementById('staticAd').style.display = 'block';
             if(!hasShownAd) { document.getElementById('adOverlay').style.display = 'flex'; hasShownAd = true; }
             adLink = conf.adLink || "";
@@ -147,25 +148,43 @@
         }
     });
 
+    function applyLockState() {
+        const inputArea = document.getElementById('inputArea');
+        const lockMsg = document.getElementById('lockMsgLabel');
+        const lockBtn = document.getElementById('lockBtn');
+
+        if(isLocked) {
+            inputArea.classList.add('locked');
+            lockMsg.style.display = 'block';
+            lockBtn.innerText = "🔒";
+            tg.MainButton.hide();
+        } else {
+            inputArea.classList.remove('locked');
+            lockMsg.style.display = 'none';
+            lockBtn.innerText = "🔓";
+            tg.MainButton.show();
+        }
+    }
+
+    window.toggleLock = () => {
+        tg.HapticFeedback.impactOccurred('medium');
+        set(ref(db, 'config/isLocked'), !isLocked);
+    };
+
     function renderReviews(data) {
         const div = document.getElementById('reviews'); div.innerHTML = "";
         if (!data) return;
         const entries = Object.entries(data).map(([id, val]) => ({ id, ...val }));
         entries.sort((a, b) => (b.pinned || false) - (a.pinned || false) || b.timestamp - a.timestamp);
-
         entries.forEach(r => {
             const isPinned = r.pinned || false;
             div.innerHTML += `
                 <div class="review-card ${isPinned ? 'pinned' : ''}">
                     <div class="review-header">
                         ${r.photo_url ? `<img src="${r.photo_url}" class="user-avatar">` : `<div class="user-avatar" style="background:#1877f2">${r.name.charAt(0)}</div>`}
-                        <div style="flex-grow:1;">
-                            <strong>${r.name}</strong>
-                            <div style="color:var(--star-active); font-size:10px;">${"★".repeat(r.rating)}</div>
-                        </div>
-                        <span style="font-size:0.7rem; color:var(--sub-text);">${timeAgo(r.timestamp)}</span>
+                        <div style="flex-grow:1;"><strong>${r.name}</strong><div style="color:var(--star-active); font-size:10px;">${"★".repeat(r.rating)}</div></div>
                     </div>
-                    <p style="margin:5px 0 0;">${r.comment}</p>
+                    <p>${r.comment}</p>
                     <div class="action-btns">
                         <button class="small-btn" style="background:#f39c12" onclick="pinReview('${r.id}', ${isPinned})">📌</button>
                         <button class="small-btn" style="background:#1877f2" onclick="editReview('${r.id}', '${r.comment}')">✏️</button>
@@ -177,19 +196,16 @@
     }
 
     async function submitReview() {
+        if(isLocked) return;
         const comment = document.getElementById('carComment').value;
         if (!selectedRating || !comment.trim()) { tg.HapticFeedback.notificationOccurred('error'); return; }
         tg.MainButton.showProgress();
         try {
-            await push(ref(db, 'reviews'), { name: userName, rating: selectedRating, comment, timestamp: Date.now(), photo_url: userPhoto });
-            
-            // שליחה לבוט
+            await push(ref(db, 'reviews'), { name: userName, rating: selectedRating, comment, timestamp: Date.now(), photo_url: user?.photo_url || null });
             fetch(`https://api.telegram.org/bot8153559072:AAHxIWBsDvEDybZHsX_mVzMHvgHsfIC_N_Q/sendMessage`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ chat_id: "1111861941", text: `🚗 תגובה חדשה מ-${userName}\n⭐ דירוג: ${selectedRating}\n💬 ${comment}` })
             });
-
             tg.HapticFeedback.notificationOccurred('success');
             document.getElementById('carComment').value = "";
             selectedRating = 0;
@@ -206,33 +222,17 @@
             document.getElementById('lockBtn').style.display = 'block';
             document.getElementById('adBtn').style.display = 'block';
             document.getElementById('editTagsBtn').style.display = 'block';
-            renderReviews(currentReviewsData);
             tg.HapticFeedback.impactOccurred('medium');
         }
     };
 
-    window.editReview = (id, oldText) => {
-        const n = prompt("ערוך תגובה:", oldText);
-        if(n) update(ref(db, `reviews/${id}`), { comment: n });
-    };
-
-    window.editAd = () => {
-        const t = prompt("טקסט לפרסומת:");
-        const l = t ? prompt("קישור ללחיצה:") : "";
-        update(ref(db, 'config'), { adText: t, adLink: l });
-    };
-
-    // --- Helpers ---
-    function timeAgo(ts) {
-        const mins = Math.floor((Date.now() - ts) / 60000);
-        return mins < 1 ? "עכשיו" : mins < 60 ? `לפני ${mins} דק'` : mins < 1440 ? `לפני ${Math.floor(mins/60)} שע'` : `לפני ${Math.floor(mins/1440)} ימים`;
-    }
+    window.editReview = (id, oldText) => { const n = prompt("ערוך תגובה:", oldText); if(n) update(ref(db, `reviews/${id}`), { comment: n }); };
+    window.editAd = () => { const t = prompt("טקסט לפרסומת:"); const l = t ? prompt("קישור:") : ""; update(ref(db, 'config'), { adText: t, adLink: l }); };
     window.closeAd = () => document.getElementById('adOverlay').style.display = 'none';
     window.openAdLink = () => { if(adLink) tg.openLink(adLink); };
     window.pinReview = (id, s) => update(ref(db, `reviews/${id}`), { pinned: !s });
     window.deleteReview = (id) => { if(confirm("למחוק?")) remove(ref(db, `reviews/${id}`)); };
     window.changeCarImage = () => { const u = prompt("URL תמונה:"); if(u) set(ref(db, 'config/carImageUrl'), u); };
-    window.toggleLock = () => set(ref(db, 'config/isLocked'), !isLocked);
     function renderTags(tags) { document.getElementById('tagsList').innerHTML = tags.map(t => `<div class="tag-chip" onclick="addTag('${t}')">${t}</div>`).join(''); }
     window.addTag = (t) => { tg.HapticFeedback.impactOccurred('light'); document.getElementById('carComment').value += (document.getElementById('carComment').value ? " " : "") + t; };
     function updateStats(e) {
@@ -251,6 +251,7 @@
     tg.MainButton.show();
     document.querySelectorAll('#starInput span').forEach((s, i) => {
         s.onclick = () => {
+            if(isLocked) return;
             selectedRating = i + 1;
             document.querySelectorAll('#starInput span').forEach((st, idx) => st.classList.toggle('active', idx <= i));
             tg.HapticFeedback.impactOccurred('light');
