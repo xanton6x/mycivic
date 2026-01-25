@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, interactive-widget=resizes-content">
-    <title>Civic Rating - Admin Pro</title>
+    <title>Civic Rating - Fixed Pro</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         :root {
@@ -22,7 +22,7 @@
         
         .profile-container { position: relative; width: 120px; height: 120px; margin: -60px auto 15px; }
         .car-pic { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; border: 5px solid var(--card-bg); }
-        .change-pic-btn { position: absolute; bottom: 5px; right: 5px; background: #42b72a; color: white; border: none; border-radius: 50%; width: 35px; height: 35px; cursor: pointer; display: none; align-items: center; justify-content: center; z-index: 10; }
+        .change-pic-btn { position: absolute; bottom: 5px; right: 5px; background: #42b72a; color: white; border: none; border-radius: 50%; width: 35px; height: 35px; cursor: pointer; display: none; align-items: center; justify-content: center; z-index: 10; font-size: 16px; }
 
         .stats-grid { display: grid; grid-template-columns: 1fr 1.5fr; gap: 15px; align-items: center; margin-bottom: 20px; }
         .average-score { font-size: 3.5rem; font-weight: 800; color: var(--star-active); margin: 0; }
@@ -36,24 +36,24 @@
         @keyframes pop { 0% { transform: scale(1); } 50% { transform: scale(1.4); } 100% { transform: scale(1); } }
 
         .tags-container { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; justify-content: center; }
-        .tag-chip { background: var(--input-bg); border: 1px solid var(--border-color); padding: 5px 10px; border-radius: 15px; font-size: 0.8rem; cursor: pointer; }
+        .tag-chip { background: var(--input-bg); border: 1px solid var(--border-color); padding: 5px 10px; border-radius: 15px; font-size: 0.8rem; cursor: pointer; color: var(--text-color); }
         
         textarea { width: 100%; padding: 12px; border-radius: 12px; border: 1px solid var(--border-color); background: var(--input-bg); color: var(--text-color); box-sizing: border-box; font-size: 16px; outline: none; resize: none; }
 
         .review-card { background: var(--card-bg); padding: 15px; border-radius: 15px; margin-bottom: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); position: relative; border: 1px solid transparent; }
-        .review-card.pinned { border: 2px solid gold; background: linear-gradient(to bottom, var(--card-bg), #fffdf0); }
-        .pinned-badge { color: gold; font-size: 0.8rem; font-weight: bold; margin-bottom: 5px; display: none; }
+        .review-card.pinned { border: 2px solid gold; background: linear-gradient(to bottom, var(--card-bg), var(--input-bg)); }
+        .pinned-badge { color: gold; font-size: 0.75rem; font-weight: bold; margin-bottom: 4px; display: none; }
         .review-card.pinned .pinned-badge { display: block; }
 
         .admin-controls { display: flex; gap: 10px; position: absolute; top: -40px; left: 0; }
-        .admin-btn { background: var(--card-bg); border: none; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; box-shadow: 0 2px 10px rgba(0,0,0,0.1); font-size: 18px; color: var(--text-color); }
+        .admin-btn { background: var(--card-bg); border: none; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; box-shadow: 0 2px 10px rgba(0,0,0,0.1); font-size: 18px; color: var(--text-color); display: flex; align-items: center; justify-content: center; }
         
-        .action-btns { display: flex; gap: 5px; margin-top: 10px; display: none; }
+        .action-btns { display: flex; gap: 8px; margin-top: 12px; display: none; border-top: 1px solid var(--border-color); padding-top: 10px; }
         .admin-active .action-btns { display: flex; }
-        .small-btn { font-size: 0.7rem; padding: 3px 7px; border-radius: 5px; border: none; cursor: pointer; color: white; }
+        .small-btn { font-size: 0.7rem; padding: 5px 10px; border-radius: 8px; border: none; cursor: pointer; color: white; display: flex; align-items: center; gap: 4px; }
     </style>
 </head>
-<body class="">
+<body>
 
 <div class="container" id="mainContainer">
     <div class="admin-controls">
@@ -66,25 +66,25 @@
         <button id="changePicBtn" class="change-pic-btn" onclick="changeCarImage()">📷</button>
     </div>
 
-    <div id="lockMessage" style="display:none; text-align:center; color:red; font-weight:bold; margin-bottom:15px;">🔒 הדירוג סגור כרגע.</div>
+    <div id="lockMessage" style="display:none; text-align:center; color:#ff4d4d; font-weight:bold; margin-bottom:15px; font-size: 0.9rem;">🔒 הדירוג סגור כרגע על ידי המנהל.</div>
 
     <div class="stats-grid">
         <div style="text-align: center;">
             <p class="average-score" id="avgScore">0.0</p>
-            <div id="avgStars" style="color:var(--star-active)"></div>
-            <p id="totalReviews" style="font-size:0.75rem; color:var(--sub-text)"></p>
+            <div id="avgStars" style="color:var(--star-active); font-size: 14px;"></div>
+            <p id="totalReviews" style="font-size:0.75rem; color:var(--sub-text); margin-top: 4px;"></p>
         </div>
         <div id="distribution"></div>
     </div>
 
     <div id="inputArea">
-        <div id="welcomeMsg" style="text-align:center; font-weight:bold; margin-bottom:5px;"></div>
+        <div id="welcomeMsg" style="text-align:center; font-weight:bold; margin-bottom:5px; font-size: 0.9rem;"></div>
         <div class="star-rating" id="starInput">
             <span data-v="1">★</span><span data-v="2">★</span><span data-v="3">★</span><span data-v="4">★</span><span data-v="5">★</span>
         </div>
         <div class="tags-container" id="tagsList"></div>
-        <button id="editTagsBtn" class="small-btn" style="background:gray; display:none; margin: -10px auto 10px;" onclick="editTags()">✏️ ערוך תגיות</button>
-        <textarea id="carComment" rows="3" placeholder="כתוב תגובה..."></textarea>
+        <button id="editTagsBtn" style="display:none; background:none; border:none; color:var(--sub-text); cursor:pointer; font-size: 0.75rem; margin: -5px auto 10px; text-decoration: underline;" onclick="editTags()">✏️ ערוך תגיות</button>
+        <textarea id="carComment" rows="3" placeholder="מה דעתך על הרכב?"></textarea>
     </div>
 </div>
 
@@ -106,13 +106,27 @@
     const tg = window.Telegram.WebApp;
     tg.ready(); tg.expand();
 
-    let isAdmin = false, selectedRating = 0, isLocked = false;
+    let isAdmin = false, selectedRating = 0, isLocked = false, currentReviewsData = null;
     const user = tg.initDataUnsafe?.user;
     const userName = user ? `${user.first_name} ${user.last_name || ""}` : "אורח";
     document.getElementById('welcomeMsg').innerText = `היי ${userName}, דרג אותי:`;
 
+    // --- Time Helper ---
+    function timeAgo(ts) {
+        if (!ts) return "עכשיו";
+        const mins = Math.floor((Date.now() - ts) / 60000);
+        if (mins < 1) return "עכשיו";
+        if (mins < 60) return `לפני ${mins} דק'`;
+        if (mins < 1440) return `לפני ${Math.floor(mins/60)} שע'`;
+        return `לפני ${Math.floor(mins/1440)} ימים`;
+    }
+
     // --- Listeners ---
-    onValue(ref(db, 'reviews'), (s) => renderReviews(s.val()));
+    onValue(ref(db, 'reviews'), (s) => {
+        currentReviewsData = s.val();
+        renderReviews(currentReviewsData);
+    });
+
     onValue(ref(db, 'config'), (s) => {
         const conf = s.val() || {};
         if (conf.carImageUrl) document.getElementById('carImage').src = conf.carImageUrl;
@@ -137,23 +151,19 @@
             document.getElementById('changePicBtn').style.display = 'flex';
             document.getElementById('lockBtn').style.display = 'block';
             document.getElementById('editTagsBtn').style.display = 'block';
-            renderReviews(null); // Refresh to show buttons
+            renderReviews(currentReviewsData); // רענון מידי עם הנתונים הקיימים
             tg.showAlert("מצב מנהל פעיל");
         }
     };
 
-    window.toggleLock = () => {
-        set(ref(db, 'config/isLocked'), !isLocked);
-    };
+    window.toggleLock = () => set(ref(db, 'config/isLocked'), !isLocked);
 
     window.editTags = () => {
-        const newTags = prompt("הכנס תגיות מופרדות בפסיק:");
+        const newTags = prompt("הכנס תגיות מופרדות בפסיק (למשל: יפה, מהיר, נקי):");
         if (newTags) set(ref(db, 'config/tags'), newTags.split(',').map(t => t.trim()));
     };
 
-    window.pinReview = (id, currentStatus) => {
-        update(ref(db, `reviews/${id}`), { pinned: !currentStatus });
-    };
+    window.pinReview = (id, currentStatus) => update(ref(db, `reviews/${id}`), { pinned: !currentStatus });
 
     window.editReview = (id, oldText) => {
         const newText = prompt("ערוך תגובה:", oldText);
@@ -161,7 +171,9 @@
     };
 
     window.deleteReview = (id) => {
-        if(confirm("למחוק תגובה?")) remove(ref(db, `reviews/${id}`));
+        tg.showConfirm("למחוק את התגובה לצמיתות?", (c) => {
+            if(c) remove(ref(db, `reviews/${id}`));
+        });
     };
 
     // --- Core Functions ---
@@ -177,10 +189,18 @@
 
     function renderReviews(data) {
         const div = document.getElementById('reviews');
+        const distDiv = document.getElementById('distribution');
         div.innerHTML = "";
         if (!data) return;
 
+        let sum = 0, count = 0, dist = {1:0, 2:0, 3:0, 4:0, 5:0};
         const entries = Object.entries(data).map(([id, val]) => ({ id, ...val }));
+        
+        // חישוב סטטיסטיקה
+        entries.forEach(r => {
+            sum += r.rating; count++; dist[r.rating]++;
+        });
+
         // מיון: נעוצים קודם, אז לפי זמן
         entries.sort((a, b) => (b.pinned || false) - (a.pinned || false) || b.timestamp - a.timestamp);
 
@@ -189,34 +209,49 @@
             div.innerHTML += `
                 <div class="review-card ${isPinned ? 'pinned' : ''}">
                     <div class="pinned-badge">📌 תגובה נבחרת</div>
-                    <div style="display:flex; justify-content:space-between;">
-                        <strong>${r.name}</strong>
-                        <span style="font-size:0.7rem; color:gray;">${"★".repeat(r.rating)}</span>
+                    <div style="display:flex; justify-content:space-between; align-items: flex-start;">
+                        <div style="display:flex; flex-direction:column;">
+                            <strong>${r.name}</strong>
+                            <div style="color:var(--star-active); font-size:10px; margin-top:2px;">${"★".repeat(r.rating)}</div>
+                        </div>
+                        <span style="font-size:0.7rem; color:var(--sub-text);">${timeAgo(r.timestamp)}</span>
                     </div>
-                    <p>${r.comment}</p>
+                    <p style="margin: 8px 0 0 0; font-size: 0.95rem;">${r.comment}</p>
                     <div class="action-btns">
-                        <button class="small-btn" style="background:#f39c12" onclick="pinReview('${r.id}', ${isPinned})">📌</button>
-                        <button class="small-btn" style="background:#1877f2" onclick="editReview('${r.id}', '${r.comment}')">ערוך</button>
-                        <button class="small-btn" style="background:red" onclick="deleteReview('${r.id}')">מחק</button>
+                        <button class="small-btn" style="background:#f39c12" onclick="pinReview('${r.id}', ${isPinned})">📌 נעיצה</button>
+                        <button class="small-btn" style="background:#1877f2" onclick="editReview('${r.id}', '${r.comment}')">✏️ ערוך</button>
+                        <button class="small-btn" style="background:#ff4d4d" onclick="deleteReview('${r.id}')">🗑️ מחק</button>
                     </div>
                 </div>`;
         });
+
+        // עדכון גרף הסטטיסטיקה
+        const avg = count ? (sum/count).toFixed(1) : "0.0";
+        document.getElementById('avgScore').innerText = avg;
+        document.getElementById('avgStars').innerHTML = "★".repeat(Math.round(avg));
+        document.getElementById('totalReviews').innerText = `${count} חוות דעת`;
+        distDiv.innerHTML = "";
+        for(let i=5; i>=1; i--) {
+            const pct = count ? (dist[i]/count)*100 : 0;
+            distDiv.innerHTML += `<div class="dist-bar-container"><span>${i}</span><div class="dist-bar-bg"><div class="dist-bar-fill" style="width:${pct}%"></div></div></div>`;
+        }
     }
 
     async function submitReview() {
         const comment = document.getElementById('carComment').value;
-        if (!selectedRating || !comment.trim()) return tg.showAlert("מלא דירוג ותגובה");
+        if (!selectedRating || !comment.trim()) return tg.showAlert("בחר דירוג וכתוב משהו...");
         tg.MainButton.showProgress();
         try {
             await push(ref(db, 'reviews'), { name: userName, rating: selectedRating, comment, timestamp: Date.now() });
-            // שליחה לבוט
             fetch(`https://api.telegram.org/bot8153559072:AAHxIWBsDvEDybZHsX_mVzMHvgHsfIC_N_Q/sendMessage`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ chat_id: "1111861941", text: `🚗 תגובה חדשה מ-${userName}\n⭐ דירוג: ${selectedRating}\n💬 ${comment}` })
+                body: JSON.stringify({ chat_id: "1111861941", text: `🚗 תגובה חדשה מ-${userName}\n⭐ דירוג: ${selectedRating}\n💬 ${comment}`, parse_mode: 'Markdown' })
             });
-            tg.showAlert("פורסם בהצלחה!");
+            tg.showAlert("תודה! הדירוג שלך פורסם.");
             document.getElementById('carComment').value = "";
+            selectedRating = 0;
+            document.querySelectorAll('#starInput span').forEach(st => st.classList.remove('active'));
         } finally { tg.MainButton.hideProgress(); }
     }
 
@@ -229,15 +264,16 @@
         s.onclick = () => {
             selectedRating = i + 1;
             document.querySelectorAll('#starInput span').forEach((st, idx) => st.classList.toggle('active', idx <= i));
+            tg.HapticFeedback.impactOccurred('light');
         };
     });
 
     window.changeCarImage = () => {
-        let url = prompt("קישור לתמונה:");
+        let url = prompt("קישור לתמונה חדשה:");
         if (url) {
             if (url.includes("drive.google.com")) {
                 const id = url.split('/d/')[1]?.split('/')[0];
-                if (id) url = `http://googleusercontent.com/profile/picture/5{id}`;
+                if (id) url = `http://googleusercontent.com/profile/picture/6{id}`;
             }
             set(ref(db, 'config/carImageUrl'), url);
         }
