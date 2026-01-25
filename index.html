@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Civic Rating - Final Pro</title>
+    <title>Civic Rating - Final Pro with Time</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         :root {
@@ -42,7 +42,6 @@
         
         textarea { width: 100%; padding: 12px; border-radius: 12px; border: 1px solid var(--border-color); background: var(--input-bg); color: var(--text-color); box-sizing: border-box; font-size: 16px; outline: none; resize: none; }
 
-        /* עיצוב למצב נעול */
         #inputArea.locked { opacity: 0.4; pointer-events: none; filter: grayscale(1); }
         #lockMsgLabel { display: none; text-align: center; color: #ff4d4d; font-weight: bold; margin-bottom: 10px; font-size: 0.9rem; }
 
@@ -56,6 +55,7 @@
         .action-btns { display: flex; gap: 8px; margin-top: 10px; display: none; }
         .admin-active .action-btns { display: flex; }
         .small-btn { font-size: 0.7rem; padding: 6px 10px; border-radius: 8px; border: none; cursor: pointer; color: white; font-weight: bold; }
+        .time-ago { font-size: 0.7rem; color: var(--sub-text); margin-right: auto; }
     </style>
 </head>
 <body>
@@ -126,17 +126,25 @@
     const user = tg.initDataUnsafe?.user;
     const userName = user ? `${user.first_name} ${user.last_name || ""}` : "אורח";
 
+    document.getElementById('welcomeMsg').innerText = `היי ${userName}, דרג אותי:`;
+
+    // פונקציית זמן פרסום
+    function timeAgo(ts) {
+        if (!ts) return "";
+        const mins = Math.floor((Date.now() - ts) / 60000);
+        if (mins < 1) return "עכשיו";
+        if (mins < 60) return `לפני ${mins} דק'`;
+        if (mins < 1440) return `לפני ${Math.floor(mins/60)} שע'`;
+        return `לפני ${Math.floor(mins/1440)} ימים`;
+    }
+
     onValue(ref(db, 'reviews'), (s) => renderReviews(s.val()));
     onValue(ref(db, 'config'), (s) => {
         const conf = s.val() || {};
         if (conf.carImageUrl) document.getElementById('carImage').src = conf.carImageUrl;
-        
-        // תיקון נעילה בזמן אמת
         isLocked = conf.isLocked || false;
         applyLockState();
-
         renderTags(conf.tags || ['🚀 מטוס!', '🔥 הצגה', '🔊 סאונד', '💎 שמורה']);
-        
         if(conf.adText) {
             document.getElementById('adTextBody').innerText = conf.adText;
             document.getElementById('staticAd').innerHTML = `<b>📢 פרסום:</b> ${conf.adText}`;
@@ -149,27 +157,20 @@
     });
 
     function applyLockState() {
-        const inputArea = document.getElementById('inputArea');
-        const lockMsg = document.getElementById('lockMsgLabel');
-        const lockBtn = document.getElementById('lockBtn');
-
         if(isLocked) {
-            inputArea.classList.add('locked');
-            lockMsg.style.display = 'block';
-            lockBtn.innerText = "🔒";
+            document.getElementById('inputArea').classList.add('locked');
+            document.getElementById('lockMsgLabel').style.display = 'block';
+            document.getElementById('lockBtn').innerText = "🔒";
             tg.MainButton.hide();
         } else {
-            inputArea.classList.remove('locked');
-            lockMsg.style.display = 'none';
-            lockBtn.innerText = "🔓";
+            document.getElementById('inputArea').classList.remove('locked');
+            document.getElementById('lockMsgLabel').style.display = 'none';
+            document.getElementById('lockBtn').innerText = "🔓";
             tg.MainButton.show();
         }
     }
 
-    window.toggleLock = () => {
-        tg.HapticFeedback.impactOccurred('medium');
-        set(ref(db, 'config/isLocked'), !isLocked);
-    };
+    window.toggleLock = () => set(ref(db, 'config/isLocked'), !isLocked);
 
     function renderReviews(data) {
         const div = document.getElementById('reviews'); div.innerHTML = "";
@@ -182,7 +183,11 @@
                 <div class="review-card ${isPinned ? 'pinned' : ''}">
                     <div class="review-header">
                         ${r.photo_url ? `<img src="${r.photo_url}" class="user-avatar">` : `<div class="user-avatar" style="background:#1877f2">${r.name.charAt(0)}</div>`}
-                        <div style="flex-grow:1;"><strong>${r.name}</strong><div style="color:var(--star-active); font-size:10px;">${"★".repeat(r.rating)}</div></div>
+                        <div style="flex-grow:1;">
+                            <strong>${r.name}</strong>
+                            <div style="color:var(--star-active); font-size:10px;">${"★".repeat(r.rating)}</div>
+                        </div>
+                        <span class="time-ago">${timeAgo(r.timestamp)}</span>
                     </div>
                     <p>${r.comment}</p>
                     <div class="action-btns">
