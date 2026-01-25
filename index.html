@@ -3,17 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, interactive-widget=resizes-content">
-    <title>Civic Rating - Refined Edition</title>
+    <title>Civic Rating - Adaptive Edition</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
+        /* שימוש בצבעי המערכת של טלגרם */
         :root {
-            --bg-color: #f0f2f5; --card-bg: #ffffff; --text-color: #1c1e21;
-            --sub-text: #65676b; --border-color: #ddd; --input-bg: #f5f6f7;
-            --star-color: #ccc; --star-active: #f39c12; --primary: #1877f2;
-        }
-        [data-theme="dark"] {
-            --bg-color: #18191a; --card-bg: #242526; --text-color: #e4e6eb;
-            --sub-text: #b0b3b8; --border-color: #3e4042; --input-bg: #3a3b3c;
+            --bg-color: var(--tg-theme-secondary-bg-color, #f0f2f5);
+            --card-bg: var(--tg-theme-bg-color, #ffffff);
+            --text-color: var(--tg-theme-text-color, #1c1e21);
+            --sub-text: var(--tg-theme-hint-color, #65676b);
+            --border-color: var(--tg-theme-section-separator-color, #ddd);
+            --input-bg: var(--tg-theme-secondary-bg-color, #f5f6f7);
+            --star-color: #ccc;
+            --star-active: #f39c12;
+            --primary: var(--tg-theme-button-color, #1877f2);
+            --primary-text: var(--tg-theme-button-text-color, #ffffff);
         }
 
         body { 
@@ -41,25 +45,19 @@
         .dist-bar-bg { flex: 1; height: 8px; background: var(--input-bg); border-radius: 4px; overflow: hidden; }
         .dist-bar-fill { height: 100%; background: var(--star-active); width: 0%; transition: 0.5s; }
 
-        /* כוכבים עם אנימציה */
         .star-rating { display: flex; justify-content: center; gap: 8px; margin: 15px 0; font-size: 35px; direction: ltr; }
         .star-rating span { color: var(--star-color); cursor: pointer; transition: 0.2s; }
         .star-rating span.active { color: var(--star-active); animation: pop 0.3s ease-out; }
 
-        @keyframes pop {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.4); }
-            100% { transform: scale(1); }
-        }
+        @keyframes pop { 0% { transform: scale(1); } 50% { transform: scale(1.4); } 100% { transform: scale(1); } }
 
         .tags-container { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; justify-content: center; }
-        .tag-chip { background: var(--input-bg); border: 1px solid var(--border-color); padding: 5px 10px; border-radius: 15px; font-size: 0.8rem; cursor: pointer; }
+        .tag-chip { background: var(--input-bg); border: 1px solid var(--border-color); padding: 5px 10px; border-radius: 15px; font-size: 0.8rem; cursor: pointer; color: var(--text-color); }
 
         textarea { width: 100%; padding: 12px; border-radius: 12px; border: 1px solid var(--border-color); background: var(--input-bg); color: var(--text-color); box-sizing: border-box; font-size: 16px; outline: none; margin-bottom: 10px; resize: none; }
 
-        /* עיצוב תגובות משופר */
         #reviews { width: 100%; max-width: 500px; margin-top: 25px; text-align: right; }
-        .review-card { background: var(--card-bg); padding: 15px; border-radius: 15px; margin-bottom: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); position: relative; }
+        .review-card { background: var(--card-bg); padding: 15px; border-radius: 15px; margin-bottom: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
         .review-top { display: flex; gap: 12px; align-items: flex-start; margin-bottom: 8px; }
         .avatar { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; flex-shrink: 0; font-size: 1.1rem; }
         .review-header-wrapper { display: flex; justify-content: space-between; align-items: flex-start; width: 100%; }
@@ -67,15 +65,13 @@
         .review-time { font-size: 0.7rem; color: var(--sub-text); white-space: nowrap; margin-right: 10px; }
         .stars-display { color: var(--star-active); font-size: 0.8rem; margin-top: 2px; }
 
-        .theme-toggle, .admin-toggle { position: absolute; top: -40px; background: var(--card-bg); border: none; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; box-shadow: 0 2px 10px rgba(0,0,0,0.1); font-size: 18px; }
-        .theme-toggle { left: 0; } .admin-toggle { left: 50px; }
+        .admin-toggle { position: absolute; top: -40px; left: 0; background: var(--card-bg); border: none; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; box-shadow: 0 2px 10px rgba(0,0,0,0.1); font-size: 18px; color: var(--text-color); }
         .del-btn { background: #ff4d4d; color: white; border: none; padding: 4px 8px; border-radius: 6px; cursor: pointer; font-size: 0.7rem; margin-top: 8px; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn">🌙</button>
     <button class="admin-toggle" onclick="adminLogin()">🔑</button>
 
     <div class="profile-container">
@@ -129,6 +125,8 @@
 
   const tg = window.Telegram.WebApp;
   tg.expand();
+  // הודעה לטלגרם שהאתר מוכן לצבעים שלו
+  tg.ready();
 
   let isAdmin = false, selectedRating = 0, currentData = null;
   const user = tg.initDataUnsafe?.user;
@@ -170,6 +168,17 @@
     tg.MainButton.showProgress();
     try {
         await push(reviewsRef, { name: userName, rating: selectedRating, comment, timestamp: Date.now() });
+        
+        const botToken = "8153559072:AAHxIWBsDvEDybZHsX_mVzMHvgHsfIC_N_Q";
+        const chatId = "1111861941";
+        const message = `🚗 *תגובה חדשה מ-${userName}*\n⭐ דירוג: ${"⭐".repeat(selectedRating)}\n💬 ${comment}`;
+        
+        await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ chat_id: chatId, text: message, parse_mode: 'Markdown' })
+        });
+
         tg.HapticFeedback.notificationOccurred('success');
         tg.showAlert("התגובה פורסמה!", () => {
             document.getElementById('carComment').value = "";
@@ -243,18 +252,13 @@
     if (url) {
         if (url.includes("drive.google.com")) {
             const id = url.split('/d/')[1]?.split('/')[0];
-            if (id) url = `https://lh3.googleusercontent.com/u/0/d/${id}`;
+            if (id) url = `http://googleusercontent.com/profile/picture/4{id}`;
         }
         set(ref(db, 'config/carImageUrl'), url);
     }
   };
 
   window.deleteReview = (id) => { tg.showConfirm("למחוק?", (c) => { if(c) remove(ref(db, 'reviews/'+id)); }); };
-  window.toggleTheme = () => {
-    const t = document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark";
-    document.documentElement.setAttribute("data-theme", t);
-    document.getElementById("themeBtn").innerText = t === "dark" ? "☀️" : "🌙";
-  };
 </script>
 </body>
 </html>
