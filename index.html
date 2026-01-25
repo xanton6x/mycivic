@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, interactive-widget=resizes-content">
-    <title>Civic Rating - Ultra Pro</title>
+    <title>Civic Rating - Refined Edition</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         :root {
@@ -31,41 +31,45 @@
             margin-top: 50px; position: relative; box-sizing: border-box;
         }
 
-        /* תמונת רכב */
         .profile-container { position: relative; width: 120px; height: 120px; margin: -60px auto 15px; }
         .car-pic { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; border: 5px solid var(--card-bg); box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
         .change-pic-btn { position: absolute; bottom: 5px; right: 5px; background: #42b72a; color: white; border: none; border-radius: 50%; width: 35px; height: 35px; cursor: pointer; display: none; align-items: center; justify-content: center; font-size: 18px; z-index: 10; }
 
-        /* סטטיסטיקה */
         .stats-grid { display: grid; grid-template-columns: 1fr 1.5fr; gap: 15px; align-items: center; margin-bottom: 20px; }
         .average-score { font-size: 3.5rem; font-weight: 800; color: var(--star-active); margin: 0; line-height: 1; }
         .dist-bar-container { display: flex; align-items: center; gap: 8px; font-size: 0.8rem; margin-bottom: 4px; }
         .dist-bar-bg { flex: 1; height: 8px; background: var(--input-bg); border-radius: 4px; overflow: hidden; }
         .dist-bar-fill { height: 100%; background: var(--star-active); width: 0%; transition: 0.5s; }
 
-        /* קלט */
+        /* כוכבים עם אנימציה */
         .star-rating { display: flex; justify-content: center; gap: 8px; margin: 15px 0; font-size: 35px; direction: ltr; }
         .star-rating span { color: var(--star-color); cursor: pointer; transition: 0.2s; }
         .star-rating span.active { color: var(--star-active); animation: pop 0.3s ease-out; }
-        
+
+        @keyframes pop {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.4); }
+            100% { transform: scale(1); }
+        }
+
         .tags-container { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; justify-content: center; }
         .tag-chip { background: var(--input-bg); border: 1px solid var(--border-color); padding: 5px 10px; border-radius: 15px; font-size: 0.8rem; cursor: pointer; }
 
         textarea { width: 100%; padding: 12px; border-radius: 12px; border: 1px solid var(--border-color); background: var(--input-bg); color: var(--text-color); box-sizing: border-box; font-size: 16px; outline: none; margin-bottom: 10px; resize: none; }
 
-        /* תגובות */
+        /* עיצוב תגובות משופר */
         #reviews { width: 100%; max-width: 500px; margin-top: 25px; text-align: right; }
-        .review-card { background: var(--card-bg); padding: 15px; border-radius: 15px; margin-bottom: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        .review-top { display: flex; gap: 12px; align-items: center; margin-bottom: 10px; }
-        .avatar { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; flex-shrink: 0; }
-        .review-header { display: flex; justify-content: space-between; align-items: center; flex: 1; }
-        .review-time { font-size: 0.75rem; color: var(--sub-text); }
-        .stars-display { color: var(--star-active); font-size: 0.85rem; }
+        .review-card { background: var(--card-bg); padding: 15px; border-radius: 15px; margin-bottom: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); position: relative; }
+        .review-top { display: flex; gap: 12px; align-items: flex-start; margin-bottom: 8px; }
+        .avatar { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; flex-shrink: 0; font-size: 1.1rem; }
+        .review-header-wrapper { display: flex; justify-content: space-between; align-items: flex-start; width: 100%; }
+        .review-user-info { display: flex; flex-direction: column; }
+        .review-time { font-size: 0.7rem; color: var(--sub-text); white-space: nowrap; margin-right: 10px; }
+        .stars-display { color: var(--star-active); font-size: 0.8rem; margin-top: 2px; }
 
-        /* כפתורי מערכת */
         .theme-toggle, .admin-toggle { position: absolute; top: -40px; background: var(--card-bg); border: none; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; box-shadow: 0 2px 10px rgba(0,0,0,0.1); font-size: 18px; }
         .theme-toggle { left: 0; } .admin-toggle { left: 50px; }
-        .del-btn { background: #ff4d4d; color: white; border: none; padding: 5px 10px; border-radius: 8px; cursor: pointer; float: left; margin-top: 5px; font-size: 0.75rem; }
+        .del-btn { background: #ff4d4d; color: white; border: none; padding: 4px 8px; border-radius: 6px; cursor: pointer; font-size: 0.7rem; margin-top: 8px; }
     </style>
 </head>
 <body>
@@ -82,25 +86,23 @@
     <div class="stats-grid">
         <div style="text-align: center;">
             <p class="average-score" id="avgScore">0.0</p>
-            <div id="avgStars" class="stars-display"></div>
-            <p id="totalReviews" style="font-size: 0.8rem; color: var(--sub-text); margin-top: 5px;"></p>
+            <div id="avgStars" style="color: var(--star-active); font-size: 14px;"></div>
+            <p id="totalReviews" style="font-size: 0.75rem; color: var(--sub-text); margin-top: 4px;"></p>
         </div>
         <div id="distribution"></div>
     </div>
 
     <div class="rating-input">
-        <div id="welcomeMsg" style="text-align: center; font-weight: bold; margin-bottom: 5px;">טוען...</div>
+        <div id="welcomeMsg" style="text-align: center; font-weight: bold; margin-bottom: 5px; font-size: 0.9rem;"></div>
         <div class="star-rating" id="starInput">
             <span data-v="1">★</span><span data-v="2">★</span><span data-v="3">★</span><span data-v="4">★</span><span data-v="5">★</span>
         </div>
-
         <div class="tags-container">
             <div class="tag-chip" onclick="addTag('🚀 מטוס!')">🚀 מטוס!</div>
             <div class="tag-chip" onclick="addTag('🔥 הצגה')">🔥 הצגה</div>
             <div class="tag-chip" onclick="addTag('🔊 איזה סאונד')">🔊 איזה סאונד</div>
             <div class="tag-chip" onclick="addTag('💎 שמורה')">💎 שמורה</div>
         </div>
-
         <textarea id="carComment" rows="3" placeholder="מה חשבת על הרכב?"></textarea>
     </div>
 </div>
@@ -131,13 +133,11 @@
   let isAdmin = false, selectedRating = 0, currentData = null;
   const user = tg.initDataUnsafe?.user;
   const userName = user ? `${user.first_name} ${user.last_name || ""}` : "אורח";
-  document.getElementById('welcomeMsg').innerText = `היי ${userName}, איך ה-Civic?`;
+  document.getElementById('welcomeMsg').innerText = `היי ${userName}, דרג אותי:`;
 
   tg.MainButton.setText("פרסם חוות דעת 🚗");
   tg.MainButton.onClick(() => submitReview());
   tg.MainButton.show();
-
-  // --- Functions ---
 
   window.addTag = (tag) => {
     const txt = document.getElementById('carComment');
@@ -155,7 +155,7 @@
   }
 
   function timeAgo(ts) {
-    if (!ts) return "עכשיו";
+    if (!ts) return "חדש";
     const mins = Math.floor((Date.now() - ts) / 60000);
     if (mins < 1) return "עכשיו";
     if (mins < 60) return `לפני ${mins} דק'`;
@@ -180,40 +180,6 @@
     } catch (e) { tg.MainButton.hideProgress(); }
   }
 
-  // --- Admin & Image Functions ---
-
-  window.adminLogin = () => {
-    const p = prompt("סיסמה:");
-    if (p === "1234") { 
-        isAdmin = true; 
-        document.getElementById('changePicBtn').style.display = 'flex'; 
-        renderReviews(currentData); 
-        tg.showAlert("מחובר כאדמין");
-    }
-  };
-
-  window.changeCarImage = () => {
-    let url = prompt("הכנס קישור לתמונה (דרייב או אתר אחר):");
-    if (!url) return;
-
-    // תיקון אוטומטי לקישורי גוגל דרייב
-    if (url.includes("drive.google.com")) {
-        const fileId = url.split('/d/')[1]?.split('/')[0];
-        if (fileId) {
-            url = `https://lh3.googleusercontent.com/u/0/d/${fileId}`;
-        }
-    }
-
-    set(ref(db, 'config/carImageUrl'), url).then(() => {
-        tg.showAlert("התמונה עודכנה!");
-    });
-  };
-
-  window.deleteReview = (id) => {
-    tg.showConfirm("למחוק?", (c) => { if(c) remove(ref(db, 'reviews/'+id)); });
-  };
-
-  // --- Star Input Logic ---
   const stars = document.querySelectorAll('#starInput span');
   stars.forEach((star, index) => {
     star.addEventListener('click', () => {
@@ -223,7 +189,6 @@
     });
   });
 
-  // --- Listeners ---
   onValue(reviewsRef, (s) => { currentData = s.val(); renderReviews(currentData); });
   onValue(ref(db, 'config/carImageUrl'), (s) => { if (s.val()) document.getElementById('carImage').src = s.val(); });
 
@@ -243,15 +208,15 @@
         <div class="review-card">
           <div class="review-top">
             <div class="avatar" style="background:${color}">${r.name.charAt(0)}</div>
-            <div class="review-info">
-              <div class="review-header">
-                <strong>${r.name}</strong>
+            <div class="review-header-wrapper">
+                <div class="review-user-info">
+                    <strong>${r.name}</strong>
+                    <div class="stars-display">${"★".repeat(r.rating)}</div>
+                </div>
                 <span class="review-time">${timeAgo(r.timestamp)}</span>
-              </div>
-              <div class="stars-display">${"★".repeat(r.rating)}</div>
             </div>
           </div>
-          <p style="margin:0">${r.comment}</p>
+          <p style="margin: 5px 0 0 0; font-size: 0.95rem;">${r.comment}</p>
           ${isAdmin ? `<button class="del-btn" onclick="deleteReview('${id}')">מחק</button>` : ''}
         </div>`;
     });
@@ -268,6 +233,23 @@
     }
   }
 
+  window.adminLogin = () => {
+    const p = prompt("סיסמה:");
+    if (p === "1234") { isAdmin = true; document.getElementById('changePicBtn').style.display = 'flex'; renderReviews(currentData); tg.showAlert("מחובר כאדמין"); }
+  };
+
+  window.changeCarImage = () => {
+    let url = prompt("קישור לתמונה:");
+    if (url) {
+        if (url.includes("drive.google.com")) {
+            const id = url.split('/d/')[1]?.split('/')[0];
+            if (id) url = `https://lh3.googleusercontent.com/u/0/d/${id}`;
+        }
+        set(ref(db, 'config/carImageUrl'), url);
+    }
+  };
+
+  window.deleteReview = (id) => { tg.showConfirm("למחוק?", (c) => { if(c) remove(ref(db, 'reviews/'+id)); }); };
   window.toggleTheme = () => {
     const t = document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark";
     document.documentElement.setAttribute("data-theme", t);
