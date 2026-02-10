@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Civic Rating - Final Pro with Time</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        :root {
+            --bg-color: var(--tg-theme-secondary-bg-color, #f0f2f5);
+            --card-bg: var(--tg-theme-bg-color, #ffffff);
+            --text-color: var(--tg-theme-text-color, #1c1e21);
+            --sub-text: var(--tg-theme-hint-color, #65676b);
+            --border-color: var(--tg-theme-section-separator-color, #ddd);
+            --input-bg: var(--tg-theme-secondary-bg-color, #f5f6f7);
+            --star-color: #ccc; --star-active: #f39c12;
+            --primary: var(--tg-theme-button-color, #1877f2);
+        }
+
+        body { font-family: -apple-system, system-ui, sans-serif; background: var(--bg-color); color: var(--text-color); margin: 0; padding: 10px; display: flex; flex-direction: column; align-items: center; padding-bottom: 80px; -webkit-tap-highlight-color: transparent; }
+        .container { width: 100%; max-width: 500px; background: var(--card-bg); padding: 20px; border-radius: 25px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); margin-top: 50px; position: relative; box-sizing: border-box; }
+        
+        .static-ad-banner { background: var(--input-bg); border-right: 4px solid var(--primary); padding: 12px; border-radius: 12px; margin: 15px 0; font-size: 0.85rem; cursor: pointer; display: none; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .ad-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); backdrop-filter: blur(8px); display: none; justify-content: center; align-items: center; z-index: 1000; }
+        .ad-modal { background: var(--card-bg); width: 85%; max-width: 320px; padding: 25px; border-radius: 20px; text-align: center; position: relative; }
+        
+        .profile-container { position: relative; width: 120px; height: 120px; margin: -60px auto 15px; }
+        .car-pic { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; border: 5px solid var(--card-bg); }
+        .change-pic-btn { position: absolute; bottom: 5px; right: 5px; background: #42b72a; color: white; border: none; border-radius: 50%; width: 35px; height: 35px; cursor: pointer; display: none; align-items: center; justify-content: center; z-index: 10; }
+
+        .stats-grid { display: grid; grid-template-columns: 1fr 1.5fr; gap: 15px; align-items: center; margin-bottom: 10px; }
+        .average-score { font-size: 3.5rem; font-weight: 800; color: var(--star-active); margin: 0; }
+        .dist-bar-bg { height: 8px; background: var(--input-bg); border-radius: 4px; overflow: hidden; flex-grow: 1; }
+        .dist-bar-fill { height: 100%; background: var(--star-active); width: 0%; transition: 0.5s; }
+
+        .star-rating { display: flex; justify-content: center; gap: 8px; margin: 15px 0; font-size: 35px; direction: ltr; }
+        .star-rating span { color: var(--star-color); cursor: pointer; }
+        .star-rating span.active { color: var(--star-active); }
+
+        .tags-container { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; justify-content: center; }
+        .tag-chip { background: var(--input-bg); border: 1px solid var(--border-color); padding: 5px 12px; border-radius: 15px; font-size: 0.85rem; cursor: pointer; }
+        
+        textarea { width: 100%; padding: 12px; border-radius: 12px; border: 1px solid var(--border-color); background: var(--input-bg); color: var(--text-color); box-sizing: border-box; font-size: 16px; outline: none; resize: none; }
+
+        #inputArea.locked { opacity: 0.4; pointer-events: none; filter: grayscale(1); }
+        #lockMsgLabel { display: none; text-align: center; color: #ff4d4d; font-weight: bold; margin-bottom: 10px; font-size: 0.9rem; }
+
+        .review-card { background: var(--card-bg); padding: 15px; border-radius: 18px; margin-bottom: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); position: relative; }
+        .review-card.pinned { border: 2px solid gold; }
+        .review-header { display: flex; gap: 12px; align-items: center; margin-bottom: 8px; }
+        .user-avatar { width: 42px; height: 42px; border-radius: 50%; background: var(--input-bg); display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; flex-shrink: 0; }
+        
+        .admin-controls { display: flex; gap: 10px; position: absolute; top: -40px; left: 0; }
+        .admin-btn { background: var(--card-bg); border: none; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; box-shadow: 0 2px 10px rgba(0,0,0,0.1); font-size: 18px; display: flex; align-items: center; justify-content: center; }
+        .action-btns { display: flex; gap: 8px; margin-top: 10px; display: none; }
+        .admin-active .action-btns { display: flex; }
+        .small-btn { font-size: 0.7rem; padding: 6px 10px; border-radius: 8px; border: none; cursor: pointer; color: white; font-weight: bold; }
+        .time-ago { font-size: 0.7rem; color: var(--sub-text); margin-right: auto; }
+    </style>
+</head>
+<body>
+
+<div id="adOverlay" class="ad-overlay">
+    <div class="ad-modal">
+        <button onclick="closeAd()" style="position:absolute; top:10px; left:10px; border:none; background:none; font-size:20px;">✕</button>
+        <h2 style="color:var(--primary);">📢 הודעה חשובה</h2>
+        <p id="adTextBody"></p>
+        <button onclick="openAdLink()" style="background:var(--primary); color:white; border:none; padding:12px; width:100%; border-radius:12px; font-weight:bold;">לפרטים נוספים</button>
+    </div>
+</div>
+
+<div class="container">
+    <div class="admin-controls">
+        <button class="admin-btn" onclick="adminLogin()">🔑</button>
+        <button id="lockBtn" class="admin-btn" style="display:none;" onclick="toggleLock()">🔓</button>
+        <button id="adBtn" class="admin-btn" style="display:none;" onclick="editAd()">📢</button>
+    </div>
+
+    <div class="profile-container">
+        <img id="carImage" src="https://via.placeholder.com/150" class="car-pic">
+        <button id="changePicBtn" class="change-pic-btn" onclick="changeCarImage()">📷</button>
+    </div>
+
+    <div class="stats-grid">
+        <div style="text-align: center;">
+            <p class="average-score" id="avgScore">0.0</p>
+            <div id="avgStars" style="color:var(--star-active); font-size: 14px;"></div>
+            <p id="totalReviews" style="font-size:0.75rem; color:var(--sub-text); margin-top: 4px;"></p>
+        </div>
+        <div id="distribution"></div>
+    </div>
+
+    <div id="staticAd" class="static-ad-banner" onclick="openAdLink()"></div>
+
+    <div id="lockMsgLabel">🔒 האפשרות להגיב סגורה כרגע</div>
+    <div id="inputArea">
+        <div id="welcomeMsg" style="text-align:center; font-weight:bold; margin-bottom:5px; font-size: 0.9rem;"></div>
+        <div class="star-rating" id="starInput">
+            <span data-v="1">★</span><span data-v="2">★</span><span data-v="3">★</span><span data-v="4">★</span><span data-v="5">★</span>
+        </div>
+        <div class="tags-container" id="tagsList"></div>
+        <button id="editTagsBtn" style="display:none; background:none; border:none; color:var(--sub-text); cursor:pointer; font-size: 0.75rem; margin: -5px auto 10px; text-decoration: underline;" onclick="editTags()">✏️ ערוך תגיות</button>
+        <textarea id="carComment" rows="3" placeholder="כתוב חוות דעת..."></textarea>
+    </div>
+</div>
+
+<div id="reviews" style="width:100%; max-width:500px; margin-top:25px;"></div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getDatabase, ref, push, onValue, remove, set, update } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyCiBOPWWSgKlz0IHVvTt4jktfHLI1hsYQc",
+        authDomain: "mycivic-11af8.firebaseapp.com",
+        databaseURL: "https://mycivic-11af8-default-rtdb.europe-west1.firebasedatabase.app",
+        projectId: "mycivic-11af8"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+    const tg = window.Telegram.WebApp;
+    tg.ready(); tg.expand();
+
+    let isAdmin = false, selectedRating = 0, isLocked = false, adLink = "", hasShownAd = false;
+    const user = tg.initDataUnsafe?.user;
+    const userName = user ? `${user.first_name} ${user.last_name || ""}` : "אורח";
+
+    document.getElementById('welcomeMsg').innerText = `היי ${userName}, דרג אותי:`;
+
+    // פונקציית זמן פרסום
+    function timeAgo(ts) {
+        if (!ts) return "";
+        const mins = Math.floor((Date.now() - ts) / 60000);
+        if (mins < 1) return "עכשיו";
+        if (mins < 60) return `לפני ${mins} דק'`;
+        if (mins < 1440) return `לפני ${Math.floor(mins/60)} שע'`;
+        return `לפני ${Math.floor(mins/1440)} ימים`;
+    }
+
+    onValue(ref(db, 'reviews'), (s) => renderReviews(s.val()));
+    onValue(ref(db, 'config'), (s) => {
+        const conf = s.val() || {};
+        if (conf.carImageUrl) document.getElementById('carImage').src = conf.carImageUrl;
+        isLocked = conf.isLocked || false;
+        applyLockState();
+        renderTags(conf.tags || ['🚀 מטוס!', '🔥 הצגה', '🔊 סאונד', '💎 שמורה']);
+        if(conf.adText) {
+            document.getElementById('adTextBody').innerText = conf.adText;
+            document.getElementById('staticAd').innerHTML = `<b>📢 פרסום:</b> ${conf.adText}`;
+            document.getElementById('staticAd').style.display = 'block';
+            if(!hasShownAd) { document.getElementById('adOverlay').style.display = 'flex'; hasShownAd = true; }
+            adLink = conf.adLink || "";
+        } else {
+            document.getElementById('staticAd').style.display = 'none';
+        }
+    });
+
+    function applyLockState() {
+        if(isLocked) {
+            document.getElementById('inputArea').classList.add('locked');
+            document.getElementById('lockMsgLabel').style.display = 'block';
+            document.getElementById('lockBtn').innerText = "🔒";
+            tg.MainButton.hide();
+        } else {
+            document.getElementById('inputArea').classList.remove('locked');
+            document.getElementById('lockMsgLabel').style.display = 'none';
+            document.getElementById('lockBtn').innerText = "🔓";
+            tg.MainButton.show();
+        }
+    }
+
+    window.toggleLock = () => set(ref(db, 'config/isLocked'), !isLocked);
+
+    function renderReviews(data) {
+        const div = document.getElementById('reviews'); div.innerHTML = "";
+        if (!data) return;
+        const entries = Object.entries(data).map(([id, val]) => ({ id, ...val }));
+        entries.sort((a, b) => (b.pinned || false) - (a.pinned || false) || b.timestamp - a.timestamp);
+        entries.forEach(r => {
+            const isPinned = r.pinned || false;
+            div.innerHTML += `
+                <div class="review-card ${isPinned ? 'pinned' : ''}">
+                    <div class="review-header">
+                        ${r.photo_url ? `<img src="${r.photo_url}" class="user-avatar">` : `<div class="user-avatar" style="background:#1877f2">${r.name.charAt(0)}</div>`}
+                        <div style="flex-grow:1;">
+                            <strong>${r.name}</strong>
+                            <div style="color:var(--star-active); font-size:10px;">${"★".repeat(r.rating)}</div>
+                        </div>
+                        <span class="time-ago">${timeAgo(r.timestamp)}</span>
+                    </div>
+                    <p>${r.comment}</p>
+                    <div class="action-btns">
+                        <button class="small-btn" style="background:#f39c12" onclick="pinReview('${r.id}', ${isPinned})">📌</button>
+                        <button class="small-btn" style="background:#1877f2" onclick="editReview('${r.id}', '${r.comment}')">✏️</button>
+                        <button class="small-btn" style="background:red" onclick="deleteReview('${r.id}')">מחק</button>
+                    </div>
+                </div>`;
+        });
+        updateStats(entries);
+    }
+
+    async function submitReview() {
+        if(isLocked) return;
+        const comment = document.getElementById('carComment').value;
+        if (!selectedRating || !comment.trim()) { tg.HapticFeedback.notificationOccurred('error'); return; }
+        tg.MainButton.showProgress();
+        try {
+            await push(ref(db, 'reviews'), { name: userName, rating: selectedRating, comment, timestamp: Date.now(), photo_url: user?.photo_url || null });
+            fetch(`https://api.telegram.org/bot8153559072:AAHxIWBsDvEDybZHsX_mVzMHvgHsfIC_N_Q/sendMessage`, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ chat_id: "1111861941", text: `🚗 תגובה חדשה מ-${userName}\n⭐ דירוג: ${selectedRating}\n💬 ${comment}` })
+            });
+            tg.HapticFeedback.notificationOccurred('success');
+            document.getElementById('carComment').value = "";
+            selectedRating = 0;
+            document.querySelectorAll('#starInput span').forEach(s => s.classList.remove('active'));
+            tg.showAlert("התגובה פורסמה!");
+        } finally { tg.MainButton.hideProgress(); }
+    }
+
+    window.adminLogin = () => {
+        if(prompt("סיסמה:") === "Qtoha1394") {
+            isAdmin = true;
+            document.body.classList.add('admin-active');
+            document.getElementById('changePicBtn').style.display = 'flex';
+            document.getElementById('lockBtn').style.display = 'block';
+            document.getElementById('adBtn').style.display = 'block';
+            document.getElementById('editTagsBtn').style.display = 'block';
+            tg.HapticFeedback.impactOccurred('medium');
+        }
+    };
+
+    window.editReview = (id, oldText) => { const n = prompt("ערוך תגובה:", oldText); if(n) update(ref(db, `reviews/${id}`), { comment: n }); };
+    window.editAd = () => { const t = prompt("טקסט לפרסומת:"); const l = t ? prompt("קישור:") : ""; update(ref(db, 'config'), { adText: t, adLink: l }); };
+    window.closeAd = () => document.getElementById('adOverlay').style.display = 'none';
+    window.openAdLink = () => { if(adLink) tg.openLink(adLink); };
+    window.pinReview = (id, s) => update(ref(db, `reviews/${id}`), { pinned: !s });
+    window.deleteReview = (id) => { if(confirm("למחוק?")) remove(ref(db, `reviews/${id}`)); };
+    window.changeCarImage = () => { const u = prompt("URL תמונה:"); if(u) set(ref(db, 'config/carImageUrl'), u); };
+    function renderTags(tags) { document.getElementById('tagsList').innerHTML = tags.map(t => `<div class="tag-chip" onclick="addTag('${t}')">${t}</div>`).join(''); }
+    window.addTag = (t) => { tg.HapticFeedback.impactOccurred('light'); document.getElementById('carComment').value += (document.getElementById('carComment').value ? " " : "") + t; };
+    function updateStats(e) {
+        let s=0, c=e.length, d={1:0,2:0,3:0,4:0,5:0};
+        e.forEach(r=>{s+=r.rating; d[r.rating]++;});
+        const avg = c ? (s/c).toFixed(1) : "0.0";
+        document.getElementById('avgScore').innerText = avg;
+        document.getElementById('avgStars').innerHTML = "★".repeat(Math.round(avg));
+        document.getElementById('totalReviews').innerText = `${c} חוות דעת`;
+        let h=""; for(let i=5; i>=1; i--) h+=`<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;"><span style="font-size:0.8rem;">${i}</span><div class="dist-bar-bg"><div class="dist-bar-fill" style="width:${c?(d[i]/c)*100:0}%"></div></div></div>`;
+        document.getElementById('distribution').innerHTML = h;
+    }
+
+    tg.MainButton.setText("פרסם חוות דעת 🚗");
+    tg.MainButton.onClick(submitReview);
+    tg.MainButton.show();
+    document.querySelectorAll('#starInput span').forEach((s, i) => {
+        s.onclick = () => {
+            if(isLocked) return;
+            selectedRating = i + 1;
+            document.querySelectorAll('#starInput span').forEach((st, idx) => st.classList.toggle('active', idx <= i));
+            tg.HapticFeedback.impactOccurred('light');
+        };
+    });
+</script>
+</body>
+</html>
