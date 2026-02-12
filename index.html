@@ -1063,7 +1063,8 @@
     // ADMIN FUNCTIONS
     window.adminLogin = () => {
         const input = prompt("🔐 סיסמת מנהל:");
-        if (btoa(input) === "UXRvYTEzOTQ=") { // Qtoha1394
+        if (!input) return;
+        if (btoa(input.trim()) === "UXRvYTEzOTQ=") {
             isAdmin = true;
             document.body.classList.add('admin-active');
             document.getElementById('changePicBtn').style.display = 'flex';
@@ -1071,7 +1072,9 @@
             document.getElementById('adBtn').style.display = 'block';
             document.getElementById('editTagsBtn').style.display = 'block';
             showToast('מצב מנהל מופעל');
-        } else showToast('סיסמה שגויה', 'error');
+        } else {
+            showToast('סיסמה שגויה', 'error');
+        }
     };
 
     window.editReview = (id, text) => {
